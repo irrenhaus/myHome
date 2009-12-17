@@ -49,35 +49,12 @@ public class AppsGrid extends GridView implements DragSource {
 	}
 
 	@Override
-	public void onDrop(View view, Object info) {
+	public void onDropped(View view, Object info) {
 		dragInProgress = false;
 	}
 
 	@Override
 	public void setDragController(DragController ctrl) {
 		dragCtrl = ctrl;
-	}
-
-	public boolean onTouchEvent(MotionEvent event)
-	{
-		super.onTouchEvent(event);
-		switch(event.getAction())
-		{
-			case MotionEvent.ACTION_MOVE:
-				if(dragInProgress) {
-					dragCtrl.onDragMotionEvent(event);
-					return true;
-				}
-				break;
-			
-			case MotionEvent.ACTION_UP:
-				if(dragInProgress) {
-					dragCtrl.onDragMotionEvent(event);
-					return true;
-				}
-				break;
-		}
-		
-		return true;
 	}
 }

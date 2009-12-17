@@ -6,6 +6,6 @@ public interface DragSource {
 	void setDragController(DragController ctrl);
 
 	void onDrag(View view, Object info);
-	void onDrop(View view, Object info);
+	void onDropped(View view, Object info);
 	
 }

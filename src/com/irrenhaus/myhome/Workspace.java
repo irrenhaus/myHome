@@ -1,20 +1,26 @@
 package com.irrenhaus.myhome;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
+import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
 public class Workspace extends LinearLayout
-					   implements DragController, ApplicationLoadingListener {
+					   implements DragController, ApplicationLoadingListener,
+					   			  OnClickListener, OnLongClickListener {
 	private DesktopView 		desktopView = null;
 	private AppsGrid			allAppsGrid = null;
 	
@@ -50,6 +56,9 @@ public class Workspace extends LinearLayout
         desktopView = new DesktopView(home);
         desktopView.setDragController(this);
         addView(desktopView);
+
+        desktopView.setOnClickListener(this);
+        desktopView.setOnLongClickListener(this);
         
         allAppsGrid = new AppsGrid(home);
         allAppsGrid.setDragController(this);
@@ -98,24 +107,43 @@ public class Workspace extends LinearLayout
 		eventPoint.x = loc[0];
 		eventPoint.y = loc[1];
 		
-		desktopView.onIncomingDrag(dragView, dragInfo);
+		((DesktopView)getChildAt(0)).onIncomingDrag(dragView, dragInfo);
 		dragSource.onDrag(dragView, dragInfo);
-		desktopView.onDragMovement(dragView, dragInfo, eventPoint);
+		((DesktopView)getChildAt(0)).onDragMovement(dragView, dragInfo, eventPoint);
+		
+		view.setVisibility(GONE);
 	}
 
 	@Override
 	public void onDragEnd() {
 		dragInProgress = false;
 		
-		desktopView.onDrop(dragView, dragInfo);
+		dragView.setVisibility(VISIBLE);
 		
-		dragSource.onDrop(dragView, dragInfo);
+		dragSource.onDropped(dragView, dragInfo);
+		
+		((DesktopView)getChildAt(0)).onDrop(dragSource, dragView, dragInfo);
 	}
 	
 	@Override
 	public void onDragMotionEvent(MotionEvent event)
 	{
 		onTouchEvent(event);
+	}
+	
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event)
+	{
+		return (dragInProgress || super.dispatchKeyEvent(event));
+	}
+	
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent event)
+	{
+		if(dragInProgress)
+			onTouchEvent(event);
+			
+		return (dragInProgress || super.dispatchTouchEvent(event));
 	}
 	
 	public boolean onTouchEvent(MotionEvent event)
@@ -128,7 +156,7 @@ public class Workspace extends LinearLayout
 					eventPoint.x = (int) event.getX();
 					eventPoint.y = (int) event.getY();
 					
-					desktopView.onDragMovement(dragView, dragInfo, eventPoint);
+					((DesktopView)getChildAt(0)).onDragMovement(dragView, dragInfo, eventPoint);
 				}
 				break;
 			
@@ -158,13 +186,52 @@ public class Workspace extends LinearLayout
     public void dispatchDraw(Canvas canvas)
     {
     	WallpaperManager mgr = WallpaperManager.getInstance();
-    	if(mgr.getWallpaper() != null)
-    		canvas.drawBitmap(mgr.getWallpaper(), 0, 0, new Paint());
+    	Bitmap bmp = mgr.getWallpaper();
+    	if(bmp != null)
+    	{
+    		Rect src = new Rect(0, 0, bmp.getWidth(), bmp.getHeight());
+    		Rect dest = new Rect(0, 0, getWidth(), getHeight());
+    		canvas.drawBitmap(bmp, src, dest, new Paint());
+    	}
+    		
     	
     	drawChild(canvas, getChildAt(0), getDrawingTime());
     }
 
 	public boolean isAppsGridOpened() {
 		return appsGridOpened;
+	}
+
+	public void onClick(View v) {
+		Object tag = v.getTag();
+		
+		if((tag instanceof DesktopItem))
+		{
+			final DesktopItem item = (DesktopItem) tag;
+			if(item.getType() == DesktopItem.DesktopItemType.APPLICATION_SHORTCUT)
+			{
+				home.startActivity(item.getLaunchIntent());
+			}
+		}
+	}
+
+	public boolean onLongClick(View v) {
+		Object tag = v.getTag();
+		
+		if((tag instanceof DesktopItem))
+		{
+			final DesktopItem item = (DesktopItem) tag;
+			
+			if(v.getParent() instanceof DragSource)
+			{
+				v.cancelLongPress();
+				v.clearFocus();
+				v.setPressed(false);
+				
+				this.onDragBegin((DragSource) v.getParent(), v, item.getApplicationInfo());
+			}
+		}
+		
+		return true;
 	}
 }
