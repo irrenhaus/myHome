@@ -8,6 +8,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
@@ -15,14 +16,17 @@ import android.widget.TextView;
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
 public class DesktopItem {
-	public enum DesktopItemType {
-		APPLICATION_SHORTCUT,
-		SYSTEM_FOLDER,
-		USER_FOLDER,
-		WIDGET
-	}
+	public static final int APPLICATION_SHORTCUT = 0;
+	public static final int SYSTEM_FOLDER = 1;
+	public static final int USER_FOLDER = 2;
+	public static final int WIDGET = 3;
 
-	private DesktopItemType			type;
+	public static final String		_ID = "id";
+	public static final String		TYPE = "type";
+	public static final String		LAYOUT_PARAMS = "layout_params";
+	public static final String		INTENT = "launch_intent";
+
+	private int						type;
 	private CellLayout.LayoutParams	layoutParams;
 	
 	private String					title;
@@ -35,7 +39,7 @@ public class DesktopItem {
 	
 	private Context					context;
 	
-	public DesktopItem(Context context, DesktopItemType type,
+	public DesktopItem(Context context, int type,
 			CellLayout.LayoutParams layoutParams)
 	{
 		this.type = type;
@@ -47,7 +51,7 @@ public class DesktopItem {
 	{
 		if(view == null)
 		{
-			if(type == DesktopItemType.APPLICATION_SHORTCUT)
+			if(type == APPLICATION_SHORTCUT)
 			{
 				TextView v = new TextView(context);
 				
@@ -87,11 +91,11 @@ public class DesktopItem {
 		return view;
 	}
 
-	public DesktopItemType getType() {
+	public int getType() {
 		return type;
 	}
 
-	public void setType(DesktopItemType type) {
+	public void setType(int type) {
 		this.type = type;
 	}
 

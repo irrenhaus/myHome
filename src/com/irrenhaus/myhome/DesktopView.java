@@ -14,6 +14,7 @@ import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	public final static int NUM_COLUMNS_DESKTOPVIEW = 4;
 	public final static int HOME_SCREEN = 0;
+	public final static String DESKTOP_NUMBER = "desktop_number";
 	
 	private DragController 	dragCtrl = null;
 	private boolean			dropInProgress = false;
@@ -24,8 +25,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	private Object			dragInfo = null;
 	
 	private Context 		context = null;
-	
-	//private DesktopAdapter	adapter = null;
 	
 	private CellInfo		vacantCells = null;
 
@@ -48,8 +47,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		
 		//Needed because of drawing the views for drag & drop
 		this.setBackgroundColor(Color.argb(1, 128, 128, 128));
-		
-		//adapter = new DesktopAdapter(context, this);
 	}
 	
 	@Override
@@ -61,6 +58,8 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		
 		setLongAxisCells(NUM_COLUMNS_DESKTOPVIEW);
 		setShortAxisCells(NUM_COLUMNS_DESKTOPVIEW);
+		
+		invalidate();
 	}
 	
 	public void setOnClickListener(OnClickListener l)
@@ -81,19 +80,14 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		for(int i = 0; i < getChildCount(); i++)
 			getChildAt(i).setOnLongClickListener(l);
 	}
-
-	@Override
-	public void onDrop(DragSource src, View view, Object info) {
-		dropInProgress = false;
-		dropView.setDrawingCacheEnabled(false);
-		
-		Point dest = calcDropCell(dragPosition);
-		
-		if((src instanceof AppsGrid))
+	
+	public void addDesktopShortcut(boolean create, Point dest, View view, ApplicationInfo info)
+	{
+		if(create)
 		{
 			CellLayout.LayoutParams params = new CellLayout.LayoutParams(dest.x, dest.y, 1, 1);
 			DesktopItem item = new DesktopItem(context,
-											   DesktopItem.DesktopItemType.APPLICATION_SHORTCUT,
+											   DesktopItem.APPLICATION_SHORTCUT,
 											   params);
 			item.setApplicationInfo((ApplicationInfo)info);
 			item.setContext(context);
@@ -105,12 +99,13 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			item.getView().setOnLongClickListener(onLongClickListener);
 			
 			this.addView(item.getView());
+			
+			item.getView().invalidate();
 		}
 		else
 		{
 			DesktopItem item = (DesktopItem) view.getTag();
 			CellLayout.LayoutParams params = item.getLayoutParams();
-			Log.d("myHome", "old: "+params.cellX+" new: "+params.cellY);
 			CellLayout.LayoutParams np = new CellLayout.LayoutParams(dest.x, dest.y,
 					params.cellHSpan, params.cellVSpan);
 			item.setLayoutParams(np);
@@ -119,10 +114,24 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			view.setOnClickListener(onClickListener);
 			view.setOnLongClickListener(onLongClickListener);
 			params = ((DesktopItem)view.getTag()).getLayoutParams();
-			Log.d("myHome", "new: "+params.cellX+" new: "+params.cellY);
 			
 			this.addView(view);
+			
+			view.invalidate();
 		}
+	}
+
+	@Override
+	public void onDrop(DragSource src, View view, Object info) {
+		dropInProgress = false;
+		dropView.setDrawingCacheEnabled(false);
+		
+		Point dest = calcDropCell(dragPosition);
+		
+		if((src instanceof AppsGrid))
+			addDesktopShortcut(true, dest, view, (ApplicationInfo)info);
+		else
+			addDesktopShortcut(false, dest, view, (ApplicationInfo)info);
 		
 		invalidate();
 	}

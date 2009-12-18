@@ -26,6 +26,17 @@ public class WallpaperManager implements Runnable {
 		
 	}
 	
+	protected void finalize()
+	{
+		wallpaper = null;
+		
+		try {
+			super.finalize();
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static WallpaperManager getInstance()
 	{
 		if(instance == null)

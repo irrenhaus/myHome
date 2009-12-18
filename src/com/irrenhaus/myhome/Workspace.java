@@ -1,6 +1,11 @@
 package com.irrenhaus.myhome;
 
+import java.net.URISyntaxException;
+
 import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -8,7 +13,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -21,6 +25,8 @@ import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 public class Workspace extends LinearLayout
 					   implements DragController, ApplicationLoadingListener,
 					   			  OnClickListener, OnLongClickListener {
+	public static final int		NUM_DESKTOPS = 1;
+	
 	private DesktopView 		desktopView = null;
 	private AppsGrid			allAppsGrid = null;
 	
@@ -72,6 +78,7 @@ public class Workspace extends LinearLayout
         {
         	((AppsAdapter)allAppsGrid.getAdapter()).reload();
         	((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
+        	loadWorkspaceDatabase();
         }
 	}
 
@@ -129,12 +136,6 @@ public class Workspace extends LinearLayout
 	public void onDragMotionEvent(MotionEvent event)
 	{
 		onTouchEvent(event);
-	}
-	
-	@Override
-	public boolean dispatchKeyEvent(KeyEvent event)
-	{
-		return (dragInProgress || super.dispatchKeyEvent(event));
 	}
 	
 	@Override
@@ -208,7 +209,7 @@ public class Workspace extends LinearLayout
 		if((tag instanceof DesktopItem))
 		{
 			final DesktopItem item = (DesktopItem) tag;
-			if(item.getType() == DesktopItem.DesktopItemType.APPLICATION_SHORTCUT)
+			if(item.getType() == DesktopItem.APPLICATION_SHORTCUT)
 			{
 				home.startActivity(item.getLaunchIntent());
 			}
@@ -233,5 +234,80 @@ public class Workspace extends LinearLayout
 		}
 		
 		return true;
+	}
+
+	public int getDesktopCount() {
+		return NUM_DESKTOPS;
+	}
+	
+	public DesktopView getDesktop(int i) {
+		if(i >= 0 && i < getChildCount())
+			return (DesktopView) getChildAt(i);
+		return null;
+	}
+    
+    public void loadWorkspaceDatabase()
+    {
+    	MyHomeDB homeDb = new MyHomeDB(home);
+    	SQLiteDatabase db = homeDb.getReadableDatabase();
+    	
+    	Cursor data = db.query(MyHomeDB.WORKSPACE_TABLE, new String[] {DesktopView.DESKTOP_NUMBER,
+    			DesktopItem.INTENT, DesktopItem.LAYOUT_PARAMS, DesktopItem.TYPE},
+    					null, null, null, null, null);
+    	
+    	while(data.moveToNext())
+    	{
+    		final CellLayout.LayoutParams params = MyHomeDB.string2LayoutParams(
+    											data.getString(data.getColumnIndex(
+    													DesktopItem.LAYOUT_PARAMS)));
+    		
+    		String intentUri = data.getString(data.getColumnIndex(DesktopItem.INTENT));
+    		Intent intent = null;
+			try {
+				intent = Intent.parseUri(intentUri, 0);
+				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+				continue;
+			}
+    		
+    		int type = data.getInt(data.getColumnIndex(DesktopItem.TYPE));
+    		
+    		final int desktop = data.getInt(data.getColumnIndex(DesktopView.DESKTOP_NUMBER));
+    		
+    		if(type == DesktopItem.APPLICATION_SHORTCUT)
+    		{
+    			final ApplicationInfo info = AppsCache.getInstance().searchByIntent(intent);
+    			
+    			if(info != null)
+    			{
+    				if(desktop >= 0 && desktop < getChildCount())
+    				{
+						final DesktopView d = (DesktopView) getChildAt(desktop);
+    					home.runOnUiThread(new Runnable() {
+							public void run() {
+		    					Point to = new Point(params.cellX, params.cellY);
+		    					
+		    					d.addDesktopShortcut(true, to, null, info);
+							}
+    					});
+    				}
+    			}
+    		}
+    	}
+    	
+    	data.close();
+    	db.close();
+    	
+    	home.runOnUiThread(new Runnable() {
+			public void run() {
+		    	invalidate();
+			}
+		});
+    }
+
+	@Override
+	public void loadingDone() {
+		loadWorkspaceDatabase();
 	}
 }

@@ -50,6 +50,16 @@ public class AppsCache implements Runnable {
 		this.context = context;
 	}
 	
+	public ApplicationInfo searchByIntent(Intent intent)
+	{
+		for(int i = 0; i < getAppCount(); i++)
+		{
+			if(applicationInfos.get(i).intent.toURI().equals(intent.toURI()))
+				return applicationInfos.get(i);
+		}
+		return null;
+	}
+	
 	public int getAppCount()
 	{
 		return applicationInfos.size();
@@ -169,6 +179,11 @@ public class AppsCache implements Runnable {
         		listeners.get(k).applicationLoaded(info);
         	}
         }
+    	
+    	for(int k = 0; k < listeners.size(); k++)
+    	{
+    		listeners.get(k).loadingDone();
+    	}
         
         loadingDone = true;
 	}
