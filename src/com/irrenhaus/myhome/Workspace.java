@@ -14,6 +14,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -67,6 +68,7 @@ public class Workspace extends LinearLayout
         
         desktopView = new DesktopView(home);
         desktopView.setDragController(this);
+        desktopView.setDesktopNumber(0);
         addView(desktopView);
 
         desktopView.setOnClickListener(this);
@@ -78,24 +80,26 @@ public class Workspace extends LinearLayout
         allAppsGrid.setOnItemClickListener(this);
         allAppsGrid.setOnItemLongClickListener(this);
 	}
-
+	
 	public void openAllAppsGrid()
     {
     	CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
-    	((DesktopView)getChildAt(0)).addView(allAppsGrid, -1, lp);
+    	((DesktopView)getCurrentDesktop()).addView(allAppsGrid, -1, lp);
     	appsGridOpened = true;
     }
     
     public void closeAllAppsGrid()
     {
-    	((DesktopView)getChildAt(0)).removeView(allAppsGrid);
+    	((DesktopView)getCurrentDesktop()).removeView(allAppsGrid);
     	appsGridOpened = false;
     }
     
     @Override
 	public void onDragBegin(DragSource src, View view, Object info) {
-		
 		closeAllAppsGrid();
+		
+		Vibrator vibrator = (Vibrator)home.getSystemService(Context.VIBRATOR_SERVICE);
+		vibrator.vibrate(100);
 		
 		dragInProgress = true;
 		
@@ -111,9 +115,9 @@ public class Workspace extends LinearLayout
 		eventPoint.x = loc[0];
 		eventPoint.y = loc[1];
 		
-		((DesktopView)getChildAt(0)).onIncomingDrag(dragView, dragInfo);
+		((DesktopView)getCurrentDesktop()).onIncomingDrag(dragView, dragInfo);
 		dragSource.onDrag(dragView, dragInfo);
-		((DesktopView)getChildAt(0)).onDragMovement(dragView, dragInfo, eventPoint);
+		((DesktopView)getCurrentDesktop()).onDragMovement(dragView, dragInfo, eventPoint);
 		
 		view.setVisibility(GONE);
 	}
@@ -126,7 +130,7 @@ public class Workspace extends LinearLayout
 		
 		dragSource.onDropped(dragView, dragInfo);
 		
-		((DesktopView)getChildAt(0)).onDrop(dragSource, dragView, dragInfo);
+		((DesktopView)getCurrentDesktop()).onDrop(dragSource, dragView, dragInfo);
 	}
 	
 	@Override
@@ -154,7 +158,7 @@ public class Workspace extends LinearLayout
 					eventPoint.x = (int) event.getX();
 					eventPoint.y = (int) event.getY();
 					
-					((DesktopView)getChildAt(0)).onDragMovement(dragView, dragInfo, eventPoint);
+					((DesktopView)getCurrentDesktop()).onDragMovement(dragView, dragInfo, eventPoint);
 				}
 				break;
 			
@@ -193,7 +197,7 @@ public class Workspace extends LinearLayout
     	}
     		
     	
-    	drawChild(canvas, getChildAt(0), getDrawingTime());
+    	drawChild(canvas, getCurrentDesktop(), getDrawingTime());
     }
 
 	public boolean isAppsGridOpened() {
@@ -220,6 +224,7 @@ public class Workspace extends LinearLayout
 			final DesktopItem item = (DesktopItem) tag;
 			if(item.getType() == DesktopItem.APPLICATION_SHORTCUT)
 			{
+				closeAllAppsGrid();
 				home.startActivity(item.getLaunchIntent());
 			}
 		}
@@ -238,7 +243,7 @@ public class Workspace extends LinearLayout
 				v.clearFocus();
 				v.setPressed(false);
 				
-				this.onDragBegin((DragSource) v.getParent(), v, item);
+				onDragBegin((DragSource) getCurrentDesktop(), v, item);
 			}
 		}
 		else if(v instanceof DesktopView)
@@ -261,88 +266,105 @@ public class Workspace extends LinearLayout
     
     public void loadWorkspaceDatabase()
     {
-    	MyHomeDB homeDb = new MyHomeDB(home);
-    	SQLiteDatabase db = homeDb.getReadableDatabase();
-    	
-    	Cursor data = db.query(MyHomeDB.WORKSPACE_TABLE, new String[] {DesktopView.DESKTOP_NUMBER,
-    			DesktopItem.INTENT, DesktopItem.LAYOUT_PARAMS, DesktopItem.TYPE},
-    					null, null, null, null, null);
-    	
-    	while(data.moveToNext())
-    	{
-    		final CellLayout.LayoutParams params = MyHomeDB.string2LayoutParams(
-    											data.getString(data.getColumnIndex(
-    													DesktopItem.LAYOUT_PARAMS)));
-    		
-    		String intentUri = data.getString(data.getColumnIndex(DesktopItem.INTENT));
-    		Intent intent = null;
-    		
-    		int type = data.getInt(data.getColumnIndex(DesktopItem.TYPE));
-    		
-    		final int desktop = data.getInt(data.getColumnIndex(DesktopView.DESKTOP_NUMBER));
-    		
-    		if(type == DesktopItem.APPLICATION_SHORTCUT)
-    		{
-
-    			try {
-    				intent = Intent.parseUri(intentUri, 0);
-    				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-    			} catch (URISyntaxException e) {
-    				e.printStackTrace();
-    				continue;
-    			}
-    			
-    			final ApplicationInfo info = AppsCache.getInstance().searchByIntent(intent);
-    			
-    			if(info != null)
-    			{
-    				if(desktop >= 0 && desktop < getChildCount())
-    				{
-						final DesktopView d = (DesktopView) getChildAt(desktop);
-    					home.runOnUiThread(new Runnable() {
-							public void run() {
-		    					Point to = new Point(params.cellX, params.cellY);
-		    					
-		    					d.addDesktopShortcut(true, to, null, info);
-							}
-    					});
-    				}
-    			}
-    		}
-    		else if(type == DesktopItem.APP_WIDGET)
-    		{
-    			final int widgetid = Integer.parseInt(intentUri);
-    			
-    			final AppWidgetProviderInfo info = AppWidgetManager.getInstance(home).getAppWidgetInfo(widgetid);
-    			final AppWidgetHostView view = myHome.getAppWidgetHost().createView(home, widgetid, info);
-    			
-    			if(desktop >= 0 && desktop < getChildCount())
-				{
-					final DesktopView d = (DesktopView) getChildAt(desktop);
-					home.runOnUiThread(new Runnable() {
-						public void run() {
-	    					Point to = new Point(params.cellX, params.cellY);
-	    					Point size = new Point(params.cellHSpan, params.cellVSpan);
-	    					
-	    					d.addAppWidget(view, info, widgetid, to, size);
-						}
-					});
-				}
-    		}
-    	}
-    	
-    	data.close();
-    	db.close();
-    	
-    	home.runOnUiThread(new Runnable() {
+    	Runnable run = new Runnable() {
 			public void run() {
-		    	invalidate();
+				//Dirty hack for timing
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				MyHomeDB homeDb = new MyHomeDB(home);
+		    	SQLiteDatabase db = homeDb.getReadableDatabase();
+		    	
+		    	Cursor data = db.query(MyHomeDB.WORKSPACE_TABLE, new String[] {DesktopView.DESKTOP_NUMBER,
+		    			DesktopItem.INTENT, DesktopItem.LAYOUT_PARAMS, DesktopItem.TYPE},
+		    					null, null, null, null, null);
+		    	
+		    	while(data.moveToNext())
+		    	{
+		    		final CellLayout.LayoutParams params = MyHomeDB.string2LayoutParams(
+		    											data.getString(data.getColumnIndex(
+		    													DesktopItem.LAYOUT_PARAMS)));
+		    		
+		    		String intentUri = data.getString(data.getColumnIndex(DesktopItem.INTENT));
+		    		Intent intent = null;
+		    		
+		    		int type = data.getInt(data.getColumnIndex(DesktopItem.TYPE));
+		    		
+		    		final int desktop = data.getInt(data.getColumnIndex(DesktopView.DESKTOP_NUMBER));
+		    		
+		    		if(type == DesktopItem.APPLICATION_SHORTCUT)
+		    		{
+
+		    			try {
+		    				intent = Intent.parseUri(intentUri, 0);
+		    				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+		    			} catch (URISyntaxException e) {
+		    				e.printStackTrace();
+		    				continue;
+		    			}
+		    			
+		    			final ApplicationInfo info = AppsCache.getInstance().searchByIntent(intent);
+		    			
+		    			if(info != null)
+		    			{
+		    				if(desktop >= 0 && desktop < getChildCount())
+		    				{
+								final DesktopView d = (DesktopView) getChildAt(desktop);
+		    					home.runOnUiThread(new Runnable() {
+									public void run() {
+				    					Point to = new Point(params.cellX, params.cellY);
+				    					
+				    					d.addDesktopShortcut(true, to, null, info);
+									}
+		    					});
+		    				}
+		    			}
+		    		}
+		    		else if(type == DesktopItem.APP_WIDGET)
+		    		{
+		    			final int widgetid = Integer.parseInt(intentUri);
+		    			
+		    			final AppWidgetProviderInfo info = AppWidgetManager.getInstance(home).getAppWidgetInfo(widgetid);
+		    			final AppWidgetHostView view = myHome.getAppWidgetHost().createView(home, widgetid, info);
+		    			view.setAppWidget(widgetid, info);
+		    			info.configure = null;
+		    			
+		    			if(desktop >= 0 && desktop < getChildCount())
+						{
+							final DesktopView d = (DesktopView) getChildAt(desktop);
+							home.runOnUiThread(new Runnable() {
+								public void run() {
+			    					Point to = new Point(params.cellX, params.cellY);
+			    					Point size = new Point(params.cellHSpan, params.cellVSpan);
+			    					
+			    					d.addAppWidget(view, info, widgetid, to, size);
+								}
+							});
+						}
+		    		}
+		    	}
+		    	
+		    	data.close();
+		    	db.close();
 			}
-		});
+    	};
+    	
+    	Thread t = new Thread(run);
+    	t.start();
     }
 
 	@Override
 	public void loadingDone() {
+		((AppsAdapter)allAppsGrid.getAdapter()).reload();
+		((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
 		loadWorkspaceDatabase();
+	}
+
+	public DesktopView getCurrentDesktop() {
+		return (DesktopView)getChildAt(0);
 	}
 }

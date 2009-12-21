@@ -16,6 +16,11 @@ public class MyHomeDB extends SQLiteOpenHelper {
 		super(context, "myhome.db", null, MYHOME_DB_VERSION);
 		
 	}
+	
+	public void finalize()
+	{
+		close();
+	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {

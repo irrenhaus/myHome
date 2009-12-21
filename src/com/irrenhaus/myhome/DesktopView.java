@@ -1,8 +1,10 @@
 package com.irrenhaus.myhome;
 
 import android.appwidget.AppWidgetHostView;
+import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,7 +13,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
@@ -42,6 +43,8 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	
 	private Point			currentPointerPos = null;
 	
+	private	int				desktopNumber = -1;
+	
 	public DesktopView(Context context) {
 		super(context);
 		
@@ -66,7 +69,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		setLongAxisCells(NUM_COLUMNS_DESKTOPVIEW);
 		setShortAxisCells(NUM_COLUMNS_DESKTOPVIEW);
 		
-		invalidate();
+		forceLayout();
 	}
 	
 	public void setOnClickListener(OnClickListener l)
@@ -124,7 +127,24 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		
 		view.setLayoutParams(params);
 		
-		DesktopItem item = new DesktopItem(context, DesktopItem.APP_WIDGET, params);
+		if(info.configure != null)
+		{
+			Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE);
+			intent.setComponent(info.configure);
+			intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id);
+			
+			myHome.getInstance().startWidgetConfigure(intent, view, info, params);
+		}
+		else
+		{
+			completeAddWidget(view, info, id, params);
+		}
+	}
+	
+	public void completeAddWidget(AppWidgetHostView view,
+			AppWidgetProviderInfo info, int id, CellLayout.LayoutParams params)
+	{
+		DesktopItem item = new DesktopItem(context, DesktopItem.APP_WIDGET, params, desktopNumber);
 		item.setAppWidget(info, view, id);
 		
 		item.getView().setOnClickListener(onClickListener);
@@ -132,7 +152,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		
 		this.addView(item.getView());
 		
-		item.getView().invalidate();
+		myHome.getInstance().storeAddItem(item);
 	}
 	
 	public void moveDesktopItem(DesktopItem item, Point dest)
@@ -149,7 +169,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		
 		this.addView(item.getView());
 		
-		item.getView().invalidate();
+		myHome.getInstance().storeUpdateItem(item);
 	}
 	
 	public void addDesktopShortcut(boolean create, Point dest, View view, ApplicationInfo info)
@@ -159,7 +179,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			CellLayout.LayoutParams params = new CellLayout.LayoutParams(dest.x, dest.y, 1, 1);
 			DesktopItem item = new DesktopItem(context,
 											   DesktopItem.APPLICATION_SHORTCUT,
-											   params);
+											   params, desktopNumber);
 			item.setApplicationInfo((ApplicationInfo)info);
 			item.setContext(context);
 			item.setLaunchIntent(((ApplicationInfo)info).intent);
@@ -171,7 +191,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			
 			this.addView(item.getView());
 			
-			item.getView().invalidate();
+			myHome.getInstance().storeAddItem(item);
 		}
 		else
 		{
@@ -232,9 +252,14 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		{
 			DesktopItem item = (DesktopItem)info;
 			
-			int id = item.getAppWidgetId();
-				
-			myHome.getAppWidgetHost().deleteAppWidgetId(id);
+			if(item.getType() == DesktopItem.APP_WIDGET)
+			{
+				int id = item.getAppWidgetId();
+				item.setAppWidgetView(null);
+				myHome.getAppWidgetHost().deleteAppWidgetId(id);
+			}
+			
+			myHome.getInstance().storeRemoveItem(item);
 		}
 	}
 	
@@ -372,5 +397,13 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	@Override
 	public void onDropped(View view, Object info) {
 		dragInProgress = false;
+	}
+
+	public int getDesktopNumber() {
+		return desktopNumber;
+	}
+
+	public void setDesktopNumber(int desktopNumber) {
+		this.desktopNumber = desktopNumber;
 	}
 }

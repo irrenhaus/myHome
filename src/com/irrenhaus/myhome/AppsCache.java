@@ -99,6 +99,14 @@ public class AppsCache implements Runnable {
 		}
 	}
 	
+	public void sendLoadingDone()
+	{
+		for(int k = 0; k < listeners.size(); k++)
+    	{
+    		listeners.get(k).loadingDone();
+    	}
+	}
+	
 	@Override
 	public synchronized void run()
 	{
@@ -108,18 +116,6 @@ public class AppsCache implements Runnable {
         mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
         final List<ResolveInfo> apps = pkgMgr.queryIntentActivities(mainIntent, 0);
-        
-        if(applicationInfos.size() == apps.size())
-        {
-        	for(int k = 0; k < listeners.size(); k++)
-        	{
-        		listeners.get(k).loadingDone();
-        	}
-            
-            loadingDone = true;
-            
-            return;
-        }
         
 		loadingDone = false;
 		
@@ -193,10 +189,7 @@ public class AppsCache implements Runnable {
         	}
         }
     	
-    	for(int k = 0; k < listeners.size(); k++)
-    	{
-    		listeners.get(k).loadingDone();
-    	}
+    	sendLoadingDone();
         
         loadingDone = true;
 	}

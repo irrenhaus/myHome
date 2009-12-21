@@ -2,6 +2,7 @@ package com.irrenhaus.myhome;
 
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetProviderInfo;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -42,21 +43,24 @@ public class DesktopItem {
 	
 	private	View					view;
 	
+	private int						desktopNumber;
+	
 	private Context					context;
 	
 	public DesktopItem(Context context, int type,
-			CellLayout.LayoutParams layoutParams)
+			CellLayout.LayoutParams layoutParams, int desktopNum)
 	{
 		this.type = type;
 		this.layoutParams = layoutParams;
 		this.context = context;
+		this.desktopNumber = desktopNum;
 	}
 	
 	public View getView()
 	{
 		if(type == APP_WIDGET)
 		{
-			return appWidgetView;
+			view = appWidgetView;
 		}
 		
 		if(view == null)
@@ -196,5 +200,33 @@ public class DesktopItem {
 
 	public int getAppWidgetId() {
 		return appWidgetId;
+	}
+
+	public ContentValues makeContentValues() {
+		ContentValues values = new ContentValues();
+		
+		String params = MyHomeDB.layoutParams2String(getLayoutParams());
+		int type = getType();
+		int desktopnum = getDesktopNumber();
+		String intent = "";
+		if(type == APP_WIDGET)
+			intent = String.valueOf(getAppWidgetId());
+		if(type == APPLICATION_SHORTCUT)
+			intent = launchIntent.toURI();
+		
+		values.put(DesktopItem.INTENT, intent);
+		values.put(DesktopItem.LAYOUT_PARAMS, params);
+		values.put(DesktopItem.TYPE, type);
+		values.put(DesktopView.DESKTOP_NUMBER, desktopnum);
+		
+		return values;
+	}
+
+	public int getDesktopNumber() {
+		return desktopNumber;
+	}
+
+	public void setDesktopNumber(int desktopNumber) {
+		this.desktopNumber = desktopNumber;
 	}
 }
