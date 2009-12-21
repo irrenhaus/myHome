@@ -1,13 +1,18 @@
 package com.irrenhaus.myhome;
 
+import android.appwidget.AppWidgetHostView;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
@@ -34,6 +39,8 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	private Bitmap          dragViewAlphaBitmap;
 	private OnClickListener onClickListener;
 	private OnLongClickListener onLongClickListener;
+	
+	private Point			currentPointerPos = null;
 	
 	public DesktopView(Context context) {
 		super(context);
@@ -81,6 +88,70 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			getChildAt(i).setOnLongClickListener(l);
 	}
 	
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent event)
+	{
+		currentPointerPos = new Point((int)event.getX(), (int)event.getY());
+			
+		return super.dispatchTouchEvent(event);
+	}
+	
+	public void addAppWidget(AppWidgetHostView view, AppWidgetProviderInfo info, int id)
+	{
+		int span[] = this.rectToCell(info.minWidth, info.minHeight);
+		
+		vacantCells = this.findAllVacantCells(null, null);
+		
+		final Point p = currentPointerPos;
+		
+		int cell[] = findNearestVacantArea(p.x, p.y, span[0], span[1], vacantCells, null);
+		
+		if(cell == null)
+		{
+			Toast.makeText(context, context.getResources().getString(R.string.no_vacant_cells), Toast.LENGTH_SHORT);
+			return;
+		}
+		
+		Point to = new Point(cell[0], cell[1]);
+		Point size = new Point(span[0], span[1]);
+		
+		addAppWidget(view, info, id, to, size);
+	}
+	
+	public void addAppWidget(AppWidgetHostView view,
+			AppWidgetProviderInfo info, int id, Point to, Point size) {
+		CellLayout.LayoutParams params = new CellLayout.LayoutParams(to.x, to.y, size.x, size.y);
+		
+		view.setLayoutParams(params);
+		
+		DesktopItem item = new DesktopItem(context, DesktopItem.APP_WIDGET, params);
+		item.setAppWidget(info, view, id);
+		
+		item.getView().setOnClickListener(onClickListener);
+		item.getView().setOnLongClickListener(onLongClickListener);
+		
+		this.addView(item.getView());
+		
+		item.getView().invalidate();
+	}
+	
+	public void moveDesktopItem(DesktopItem item, Point dest)
+	{
+		CellLayout.LayoutParams params = item.getLayoutParams();
+		CellLayout.LayoutParams np = new CellLayout.LayoutParams(dest.x, dest.y,
+				params.cellHSpan, params.cellVSpan);
+		item.setLayoutParams(np);
+		item.getView().setTag(item);
+
+		item.getView().setOnClickListener(onClickListener);
+		item.getView().setOnLongClickListener(onLongClickListener);
+		params = ((DesktopItem)item.getView().getTag()).getLayoutParams();
+		
+		this.addView(item.getView());
+		
+		item.getView().invalidate();
+	}
+	
 	public void addDesktopShortcut(boolean create, Point dest, View view, ApplicationInfo info)
 	{
 		if(create)
@@ -105,19 +176,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		else
 		{
 			DesktopItem item = (DesktopItem) view.getTag();
-			CellLayout.LayoutParams params = item.getLayoutParams();
-			CellLayout.LayoutParams np = new CellLayout.LayoutParams(dest.x, dest.y,
-					params.cellHSpan, params.cellVSpan);
-			item.setLayoutParams(np);
-			view.setTag(item);
-
-			view.setOnClickListener(onClickListener);
-			view.setOnLongClickListener(onLongClickListener);
-			params = ((DesktopItem)view.getTag()).getLayoutParams();
-			
-			this.addView(view);
-			
-			view.invalidate();
+			moveDesktopItem(item, dest);
 		}
 	}
 
@@ -126,17 +185,60 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		dropInProgress = false;
 		dropView.setDrawingCacheEnabled(false);
 		
+		if(inDeletePosition(dragPosition))
+		{
+			Log.d("DeletePosition", "true");
+			deleteIfItem(view.getTag());
+			invalidate();
+			return;
+		}
+		
 		Point dest = calcDropCell(dragPosition);
 		
 		if((src instanceof AppsGrid))
 			addDesktopShortcut(true, dest, view, (ApplicationInfo)info);
 		else
-			addDesktopShortcut(false, dest, view, (ApplicationInfo)info);
+		{
+			if(info instanceof DesktopItem)
+			{
+				moveDesktopItem((DesktopItem)info, dest);
+			}
+		}
 		
 		invalidate();
 	}
 	
-	public Point calcDropCell(Point drop)
+	private boolean inDeletePosition(Point p)
+	{
+		boolean land = getWidth() > getHeight();
+		
+		if(land)
+		{
+			if(p.x > (getWidth()-54))
+				return true;
+		}
+		else
+		{
+			if(p.y > (getHeight()-54))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	private void deleteIfItem(Object info)
+	{
+		if(info instanceof DesktopItem)
+		{
+			DesktopItem item = (DesktopItem)info;
+			
+			int id = item.getAppWidgetId();
+				
+			myHome.getAppWidgetHost().deleteAppWidgetId(id);
+		}
+	}
+	
+	private Point calcDropCell(Point drop)
 	{
 		Point ret = new Point();
 
@@ -176,15 +278,29 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	public void onDragMovement(View view, Object info, Point position) {
 		dragPosition.x = position.x-dragModifier.x;
 		dragPosition.y = position.y-dragModifier.y;
+			
+		vacantCells = findAllVacantCells(null, null);
+			
+		int[] p = null;
 		
-		Point pos = calcDropCell(dragPosition);
-		
+		if(info instanceof DesktopItem)
+		{
+			DesktopItem item = (DesktopItem)info;
+			p = findNearestVacantArea(dragPosition.x, dragPosition.y,
+					item.getLayoutParams().cellHSpan,
+					item.getLayoutParams().cellVSpan,
+					vacantCells, null);
+		}
+		else
+			p = findNearestVacantArea(dragPosition.x, dragPosition.y,
+					1, 1, vacantCells, null);
+				
 		int[] pixel = new int[2];
-		this.cellToPoint(pos.x, pos.y, pixel);
-
+		this.cellToPoint(p[0], p[1], pixel);
+				
 		estDropPosition.x = pixel[0];
 		estDropPosition.y = pixel[1];
-
+		
 		dragModifier.x = view.getWidth()/2;
 		dragModifier.y = view.getHeight()/2;
 		
@@ -232,7 +348,8 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		
 		if(dropInProgress && dropView != null && dragPosition != null)
 		{
-			if(dragViewAlphaBitmap != null && estDropPosition != null)
+			if(dragViewAlphaBitmap != null && estDropPosition != null &&
+				!inDeletePosition(dragPosition))
 				canvas.drawBitmap(dragViewAlphaBitmap, estDropPosition.x,
 						estDropPosition.y, null);
 			
@@ -246,8 +363,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		dragInProgress = true;
 
 		this.removeView(view);
-		
-		vacantCells = this.findAllVacantCells(null, null);
 	}
 
 	public DragController getDragCtrl() {

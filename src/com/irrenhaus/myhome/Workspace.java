@@ -2,6 +2,9 @@ package com.irrenhaus.myhome;
 
 import java.net.URISyntaxException;
 
+import android.appwidget.AppWidgetHostView;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -12,19 +15,22 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
 public class Workspace extends LinearLayout
 					   implements DragController, ApplicationLoadingListener,
-					   			  OnClickListener, OnLongClickListener {
+					   			  OnClickListener, OnLongClickListener,
+					   			  OnItemClickListener, OnItemLongClickListener{
 	public static final int		NUM_DESKTOPS = 1;
 	
 	private DesktopView 		desktopView = null;
@@ -69,17 +75,8 @@ public class Workspace extends LinearLayout
         allAppsGrid = new AppsGrid(home);
         allAppsGrid.setDragController(this);
         allAppsGrid.setAdapter(new AppsAdapter(home, null));
-        
-        if(!AppsCache.getInstance().isLoadingDone())
-        {
-        	AppsCache.getInstance().start();
-        }
-        else
-        {
-        	((AppsAdapter)allAppsGrid.getAdapter()).reload();
-        	((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
-        	loadWorkspaceDatabase();
-        }
+        allAppsGrid.setOnItemClickListener(this);
+        allAppsGrid.setOnItemLongClickListener(this);
 	}
 
 	public void openAllAppsGrid()
@@ -202,6 +199,18 @@ public class Workspace extends LinearLayout
 	public boolean isAppsGridOpened() {
 		return appsGridOpened;
 	}
+	
+	public boolean onItemLongClick(AdapterView<?> parent, View view,
+				int position, long id) {
+		onDragBegin((DragSource)parent, view, parent.getAdapter().getItem(position));
+			
+		return true;
+	}
+	
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+				long id) {
+		home.startActivity(((ApplicationInfo)parent.getAdapter().getItem(position)).intent);
+	}
 
 	public void onClick(View v) {
 		Object tag = v.getTag();
@@ -229,8 +238,12 @@ public class Workspace extends LinearLayout
 				v.clearFocus();
 				v.setPressed(false);
 				
-				this.onDragBegin((DragSource) v.getParent(), v, item.getApplicationInfo());
+				this.onDragBegin((DragSource) v.getParent(), v, item);
 			}
+		}
+		else if(v instanceof DesktopView)
+		{
+			home.startWidgetPicker();
 		}
 		
 		return true;
@@ -263,13 +276,6 @@ public class Workspace extends LinearLayout
     		
     		String intentUri = data.getString(data.getColumnIndex(DesktopItem.INTENT));
     		Intent intent = null;
-			try {
-				intent = Intent.parseUri(intentUri, 0);
-				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-				continue;
-			}
     		
     		int type = data.getInt(data.getColumnIndex(DesktopItem.TYPE));
     		
@@ -277,6 +283,15 @@ public class Workspace extends LinearLayout
     		
     		if(type == DesktopItem.APPLICATION_SHORTCUT)
     		{
+
+    			try {
+    				intent = Intent.parseUri(intentUri, 0);
+    				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+    			} catch (URISyntaxException e) {
+    				e.printStackTrace();
+    				continue;
+    			}
+    			
     			final ApplicationInfo info = AppsCache.getInstance().searchByIntent(intent);
     			
     			if(info != null)
@@ -293,6 +308,26 @@ public class Workspace extends LinearLayout
     					});
     				}
     			}
+    		}
+    		else if(type == DesktopItem.APP_WIDGET)
+    		{
+    			final int widgetid = Integer.parseInt(intentUri);
+    			
+    			final AppWidgetProviderInfo info = AppWidgetManager.getInstance(home).getAppWidgetInfo(widgetid);
+    			final AppWidgetHostView view = myHome.getAppWidgetHost().createView(home, widgetid, info);
+    			
+    			if(desktop >= 0 && desktop < getChildCount())
+				{
+					final DesktopView d = (DesktopView) getChildAt(desktop);
+					home.runOnUiThread(new Runnable() {
+						public void run() {
+	    					Point to = new Point(params.cellX, params.cellY);
+	    					Point size = new Point(params.cellHSpan, params.cellVSpan);
+	    					
+	    					d.addAppWidget(view, info, widgetid, to, size);
+						}
+					});
+				}
     		}
     	}
     	

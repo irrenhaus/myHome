@@ -102,6 +102,25 @@ public class AppsCache implements Runnable {
 	@Override
 	public synchronized void run()
 	{
+		PackageManager pkgMgr = context.getPackageManager();
+		
+		Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
+        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+
+        final List<ResolveInfo> apps = pkgMgr.queryIntentActivities(mainIntent, 0);
+        
+        if(applicationInfos.size() == apps.size())
+        {
+        	for(int k = 0; k < listeners.size(); k++)
+        	{
+        		listeners.get(k).loadingDone();
+        	}
+            
+            loadingDone = true;
+            
+            return;
+        }
+        
 		loadingDone = false;
 		
 		if(applicationInfos.size() > 0)
@@ -109,12 +128,6 @@ public class AppsCache implements Runnable {
 			applicationInfos.clear();
 		}
 		
-		PackageManager pkgMgr = context.getPackageManager();
-		
-		Intent mainIntent = new Intent(Intent.ACTION_MAIN, null);
-        mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-
-        final List<ResolveInfo> apps = pkgMgr.queryIntentActivities(mainIntent, 0);
         Collections.sort(apps, new ResolveInfo.DisplayNameComparator(pkgMgr));
 
         for(int i = 0; i < apps.size(); i++)

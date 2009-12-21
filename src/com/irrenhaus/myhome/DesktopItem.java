@@ -1,5 +1,7 @@
 package com.irrenhaus.myhome;
 
+import android.appwidget.AppWidgetHostView;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,7 +10,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
@@ -19,7 +20,7 @@ public class DesktopItem {
 	public static final int APPLICATION_SHORTCUT = 0;
 	public static final int SYSTEM_FOLDER = 1;
 	public static final int USER_FOLDER = 2;
-	public static final int WIDGET = 3;
+	public static final int APP_WIDGET = 3;
 
 	public static final String		_ID = "id";
 	public static final String		TYPE = "type";
@@ -35,6 +36,10 @@ public class DesktopItem {
 	private ApplicationInfo			applicationInfo;
 	private Intent					launchIntent;
 	
+	private AppWidgetProviderInfo	appWidgetInfo;
+	private AppWidgetHostView		appWidgetView;
+	private int						appWidgetId;
+	
 	private	View					view;
 	
 	private Context					context;
@@ -49,6 +54,11 @@ public class DesktopItem {
 	
 	public View getView()
 	{
+		if(type == APP_WIDGET)
+		{
+			return appWidgetView;
+		}
+		
 		if(view == null)
 		{
 			if(type == APPLICATION_SHORTCUT)
@@ -90,6 +100,15 @@ public class DesktopItem {
 		
 		return view;
 	}
+	
+	public void setAppWidget(AppWidgetProviderInfo info, AppWidgetHostView view, int id)
+	{
+		appWidgetView = view;
+		appWidgetInfo = info;
+		appWidgetId = id;
+		
+		appWidgetView.setTag(this);
+	}
 
 	public int getType() {
 		return type;
@@ -107,6 +126,8 @@ public class DesktopItem {
 		this.layoutParams = layoutParams;
 		if(this.view != null)
 			this.view.setLayoutParams(layoutParams);
+		else if(this.appWidgetView != null)
+			this.appWidgetView.setLayoutParams(layoutParams);
 	}
 
 	public String getTitle() {
@@ -151,5 +172,29 @@ public class DesktopItem {
 
 	public void setView(View view) {
 		this.view = view;
+	}
+
+	public AppWidgetProviderInfo getAppWidgetInfo() {
+		return appWidgetInfo;
+	}
+
+	public void setAppWidgetInfo(AppWidgetProviderInfo appWidgetInfo) {
+		this.appWidgetInfo = appWidgetInfo;
+	}
+
+	public AppWidgetHostView getAppWidgetView() {
+		return appWidgetView;
+	}
+
+	public void setAppWidgetView(AppWidgetHostView appWidgetView) {
+		this.appWidgetView = appWidgetView;
+	}
+
+	public void setAppWidgetId(int appWidgetId) {
+		this.appWidgetId = appWidgetId;
+	}
+
+	public int getAppWidgetId() {
+		return appWidgetId;
 	}
 }

@@ -6,6 +6,8 @@ import android.graphics.Point;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
@@ -16,6 +18,10 @@ public class AppsGrid extends GridView implements DragSource {
 	
 	private DragController dragCtrl = null;
 	private boolean dragInProgress = false;
+
+	private android.widget.AdapterView.OnItemClickListener onClickListener;
+
+	private android.widget.AdapterView.OnItemLongClickListener onLongClickListener;
 	
 	public AppsGrid(final Context context) {
 		super(context);
@@ -25,22 +31,6 @@ public class AppsGrid extends GridView implements DragSource {
 		this.setVerticalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
 		this.setHorizontalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
 		this.setBackgroundColor(Color.argb(192, 64, 64, 64));
-		
-		this.setOnItemLongClickListener(new OnItemLongClickListener() {
-			public boolean onItemLongClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				dragCtrl.onDragBegin(AppsGrid.this, view, AppsGrid.this.getAdapter().getItem(position));
-				
-				return true;
-			}
-		});
-		
-		this.setOnItemClickListener(new OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View view, int position,
-					long id) {
-				context.startActivity(((ApplicationInfo)AppsGrid.this.getAdapter().getItem(position)).intent);
-			}
-		});
 	}
 
 	@Override
@@ -56,5 +46,18 @@ public class AppsGrid extends GridView implements DragSource {
 	@Override
 	public void setDragController(DragController ctrl) {
 		dragCtrl = ctrl;
+	}
+	
+	public void setOnItemClickListener(OnItemClickListener l)
+	{
+		super.setOnItemClickListener(l);
+		onClickListener = l;
+	}
+	
+	public void setOnItemLongClickListener(OnItemLongClickListener l)
+	{
+		super.setOnItemLongClickListener(l);
+		
+		onLongClickListener = l;
 	}
 }

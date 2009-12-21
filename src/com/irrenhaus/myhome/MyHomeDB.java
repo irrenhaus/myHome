@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class MyHomeDB extends SQLiteOpenHelper {
-	public static final int		MYHOME_DB_VERSION = 1;
+	public static final int		MYHOME_DB_VERSION = 3;
 	
 	public static final String 	WORKSPACE_TABLE = "workspace_data";
 	
@@ -30,7 +30,8 @@ public class MyHomeDB extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		
+		db.execSQL("DELETE FROM " + WORKSPACE_TABLE + " WHERE " + DesktopItem.TYPE +
+				"='" + String.valueOf(DesktopItem.APP_WIDGET) + "';");
 	}
 	
 	public static String layoutParams2String(CellLayout.LayoutParams params)
