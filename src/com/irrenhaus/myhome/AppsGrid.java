@@ -31,6 +31,7 @@ public class AppsGrid extends GridView implements DragSource {
 		this.setVerticalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
 		this.setHorizontalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
 		this.setBackgroundColor(Color.argb(192, 64, 64, 64));
+		this.setBackgroundResource(R.drawable.cell_bg);
 	}
 
 	@Override

@@ -26,7 +26,8 @@ import com.irrenhaus.myhome.CellLayout.LayoutParams;
 
 public class myHome extends Activity {
 	private Workspace				workspace = null;
-	
+	private Screen					screen = null;
+
 	private static AppWidgetHost	appWidgetHost = null;
 	private static final int		appWidgetHostID = 1337;
 
@@ -58,6 +59,8 @@ public class myHome extends Activity {
         
         AppsCache.getInstance().setContext(getApplicationContext());
         
+        screen = (Screen)findViewById(R.id.screen);
+        
         workspace = (Workspace)findViewById(R.id.workspace);
         workspace.setHome(this);
         
@@ -77,12 +80,6 @@ public class myHome extends Activity {
         
         mgr.setActivity(this);
         mgr.get();
-        
-        if(mgr.getWallpaper() == null)
-        {
-	        mgr.selectWallpaperResource(R.drawable.wallpaper);
-	        mgr.set();
-        }
         
         myHome.setAppWidgetHost(new AppWidgetHost(this, myHome.appWidgetHostID));
         
@@ -261,5 +258,14 @@ public class myHome extends Activity {
 		paramsTmp = params;
 		
 		startActivityForResult(intent, myHome.ADD_WIDGET);
+	}
+	
+	public Workspace getWorkspace() {
+		return workspace;
+	}
+	
+	public void desktopChanged(boolean diamond, int num)
+	{
+		screen.desktopChanged(diamond, num);
 	}
 }

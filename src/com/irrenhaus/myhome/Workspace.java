@@ -87,7 +87,7 @@ public class Workspace extends LinearLayout
             desktopView[i].setOnLongClickListener(this);
         }
         
-        addView(getCurrentDesktop());
+        gotoDesktop(currentDesktop);
         
         allAppsGrid = new AppsGrid(home);
         allAppsGrid.setDragController(this);
@@ -109,6 +109,8 @@ public class Workspace extends LinearLayout
 		currentDesktop = num;
 		
 		addView(getCurrentDesktop());
+		
+		home.desktopChanged(diamondLayout, num);
 	}
 	
 	public void openAllAppsGrid()
@@ -216,22 +218,6 @@ public class Workspace extends LinearLayout
 			}
 		});
 	}
-	
-    @Override
-    public void dispatchDraw(Canvas canvas)
-    {
-    	WallpaperManager mgr = WallpaperManager.getInstance();
-    	Bitmap bmp = mgr.getWallpaper();
-    	if(bmp != null)
-    	{
-    		Rect src = new Rect(0, 0, bmp.getWidth(), bmp.getHeight());
-    		Rect dest = new Rect(0, 0, getWidth(), getHeight());
-    		canvas.drawBitmap(bmp, src, dest, new Paint());
-    	}
-    		
-    	
-    	drawChild(canvas, getCurrentDesktop(), getDrawingTime());
-    }
 
 	public boolean isAppsGridOpened() {
 		return appsGridOpened;
@@ -387,7 +373,11 @@ public class Workspace extends LinearLayout
 	@Override
 	public void loadingDone() {
 		((AppsAdapter)allAppsGrid.getAdapter()).reload();
-		((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
+		home.runOnUiThread(new Runnable() {
+			public void run() {
+				((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
+			}
+		});
 		loadWorkspaceDatabase();
 	}
 
@@ -411,6 +401,9 @@ public class Workspace extends LinearLayout
 		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
 		{
 			Log.d("myHome", "onFling: "+velocityX+", "+velocityY);
+			
+			if(isAppsGridOpened())
+				return false;
 			
 			if(Math.abs(velocityX) > Math.abs(velocityY))
 			{
@@ -447,7 +440,7 @@ public class Workspace extends LinearLayout
 				}
 			}
 			
-			return false;
+			return true;
 		}
 	}
 }
