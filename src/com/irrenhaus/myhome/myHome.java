@@ -9,10 +9,14 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.View.OnClickListener;
@@ -39,6 +43,8 @@ public class myHome extends Activity {
 	private SQLiteDatabase 			db;
 	
 	private static myHome			instance;
+
+	private static final int		MENU_ENTRY_SETTINGS_ID = R.string.menu_entry_settings;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -90,7 +96,21 @@ public class myHome extends Activity {
     {
     	return instance;
     }
-	
+    
+    public boolean onCreateOptionsMenu(Menu menu)
+    {
+    	Resources res = getResources();
+    	
+    	Intent intent = new Intent(android.provider.Settings.ACTION_SETTINGS);
+    	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+    			Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+    	
+    	menu.add(1, MENU_ENTRY_SETTINGS_ID,
+    			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS_ID)).setIntent(intent);
+    	
+    	return true;
+    }
+    
     public void openDatabase()
     {
     	if(homeDb == null)

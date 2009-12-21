@@ -16,6 +16,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -32,9 +34,13 @@ public class Workspace extends LinearLayout
 					   implements DragController, ApplicationLoadingListener,
 					   			  OnClickListener, OnLongClickListener,
 					   			  OnItemClickListener, OnItemLongClickListener{
-	public static final int		NUM_DESKTOPS = 1;
+	public static final int		NUM_DESKTOPS = 3;
+	public static final int		DEFAULT_DESKTOP = 1;
 	
-	private DesktopView 		desktopView = null;
+	private DesktopView[] 		desktopView = null;
+	private int					currentDesktop = DEFAULT_DESKTOP;
+	private boolean				diamondLayout = false;
+	
 	private AppsGrid			allAppsGrid = null;
 	
 	private boolean				appsGridOpened = false;
@@ -48,7 +54,10 @@ public class Workspace extends LinearLayout
 	private DragSource			dragSource = null;
 	
 	private myHome				home = null;
-
+	
+	private GestureDetector		gestureDetector = null;
+	private GestureListener		gestureListener = null;
+	
 	public Workspace(Context context) {
 		super(context);
 	}
@@ -66,19 +75,40 @@ public class Workspace extends LinearLayout
         myPlacesAdapter = new MyPlacesAdapter(home);
         //myPlacesList.setAdapter(myPlacesAdapter);
         
-        desktopView = new DesktopView(home);
-        desktopView.setDragController(this);
-        desktopView.setDesktopNumber(0);
-        addView(desktopView);
+        desktopView = new DesktopView[NUM_DESKTOPS];
+        
+        for(int i = 0; i < NUM_DESKTOPS; i++)
+        {
+        	desktopView[i] = new DesktopView(home);
+            desktopView[i].setDragController(this);
+            desktopView[i].setDesktopNumber(i);
 
-        desktopView.setOnClickListener(this);
-        desktopView.setOnLongClickListener(this);
+            desktopView[i].setOnClickListener(this);
+            desktopView[i].setOnLongClickListener(this);
+        }
+        
+        addView(getCurrentDesktop());
         
         allAppsGrid = new AppsGrid(home);
         allAppsGrid.setDragController(this);
         allAppsGrid.setAdapter(new AppsAdapter(home, null));
         allAppsGrid.setOnItemClickListener(this);
         allAppsGrid.setOnItemLongClickListener(this);
+        
+        gestureListener = new GestureListener();
+        gestureDetector = new GestureDetector(home, gestureListener);
+	}
+	
+	public void gotoDesktop(int num)
+	{
+		if(num < 0 || num >= NUM_DESKTOPS)
+			return;
+		
+		removeAllViews();
+		
+		currentDesktop = num;
+		
+		addView(getCurrentDesktop());
 	}
 	
 	public void openAllAppsGrid()
@@ -144,6 +174,9 @@ public class Workspace extends LinearLayout
 	{
 		if(dragInProgress)
 			onTouchEvent(event);
+		
+		if(gestureDetector.onTouchEvent(event))
+			return true;
 			
 		return (dragInProgress || super.dispatchTouchEvent(event));
 	}
@@ -257,12 +290,6 @@ public class Workspace extends LinearLayout
 	public int getDesktopCount() {
 		return NUM_DESKTOPS;
 	}
-	
-	public DesktopView getDesktop(int i) {
-		if(i >= 0 && i < getChildCount())
-			return (DesktopView) getChildAt(i);
-		return null;
-	}
     
     public void loadWorkspaceDatabase()
     {
@@ -270,7 +297,7 @@ public class Workspace extends LinearLayout
 			public void run() {
 				//Dirty hack for timing
 				try {
-					Thread.sleep(500);
+					Thread.sleep(150);
 				} catch (InterruptedException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -281,7 +308,7 @@ public class Workspace extends LinearLayout
 		    	
 		    	Cursor data = db.query(MyHomeDB.WORKSPACE_TABLE, new String[] {DesktopView.DESKTOP_NUMBER,
 		    			DesktopItem.INTENT, DesktopItem.LAYOUT_PARAMS, DesktopItem.TYPE},
-		    					null, null, null, null, null);
+		    					null, null, null, null, DesktopView.DESKTOP_NUMBER+" asc");
 		    	
 		    	while(data.moveToNext())
 		    	{
@@ -311,9 +338,9 @@ public class Workspace extends LinearLayout
 		    			
 		    			if(info != null)
 		    			{
-		    				if(desktop >= 0 && desktop < getChildCount())
+		    				if(desktop >= 0 && desktop < NUM_DESKTOPS)
 		    				{
-								final DesktopView d = (DesktopView) getChildAt(desktop);
+								final DesktopView d = getDesktop(desktop);
 		    					home.runOnUiThread(new Runnable() {
 									public void run() {
 				    					Point to = new Point(params.cellX, params.cellY);
@@ -333,9 +360,9 @@ public class Workspace extends LinearLayout
 		    			view.setAppWidget(widgetid, info);
 		    			info.configure = null;
 		    			
-		    			if(desktop >= 0 && desktop < getChildCount())
+		    			if(desktop >= 0 && desktop < NUM_DESKTOPS)
 						{
-							final DesktopView d = (DesktopView) getChildAt(desktop);
+							final DesktopView d = getDesktop(desktop);
 							home.runOnUiThread(new Runnable() {
 								public void run() {
 			    					Point to = new Point(params.cellX, params.cellY);
@@ -365,6 +392,62 @@ public class Workspace extends LinearLayout
 	}
 
 	public DesktopView getCurrentDesktop() {
-		return (DesktopView)getChildAt(0);
+		return (DesktopView)desktopView[currentDesktop];
+	}
+
+	public DesktopView getDesktop(int pos) {
+		if(pos < 0 || pos >= NUM_DESKTOPS)
+			return null;
+		
+		return (DesktopView)desktopView[pos];
+	}
+
+	public int getCurrentDesktopNum() {
+		return currentDesktop;
+	}
+	
+	class GestureListener extends GestureDetector.SimpleOnGestureListener {
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
+		{
+			Log.d("myHome", "onFling: "+velocityX+", "+velocityY);
+			
+			if(Math.abs(velocityX) > Math.abs(velocityY))
+			{
+				if(velocityX < 0)
+				{
+					if(diamondLayout)
+					{
+						
+					}
+					else
+						gotoDesktop(getCurrentDesktopNum()+1);
+				}
+				else
+				{
+					if(diamondLayout)
+					{
+						
+					}
+					else
+						gotoDesktop(getCurrentDesktopNum()-1);
+				}
+			}
+			else if(diamondLayout)
+			{
+				Log.d("myHome", "onFling: Vertical");
+				
+				if(velocityY < 0)
+				{
+					Log.d("myHome", "onFling: Bottom screen");
+				}
+				else
+				{
+					Log.d("myHome", "onFling: Top screen");
+				}
+			}
+			
+			return false;
+		}
 	}
 }

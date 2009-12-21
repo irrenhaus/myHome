@@ -5,4 +5,5 @@
 <string name="myPlacesDesktop">Desktop</string>
 <string name="myPlacesAllApps">All apps</string>
 <string name="no_vacant_cells">Sorry, not enough free space on the desktop!</string>
+<string name="menu_entry_settings">Settings</string>
 </resources>
