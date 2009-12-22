@@ -1,14 +1,19 @@
 package com.irrenhaus.myhome;
 
+import android.app.AlertDialog;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.net.Uri;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -199,6 +204,36 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			moveDesktopItem(item, dest);
 		}
 	}
+	
+	public void addDesktopFolder(boolean create, Point dest, View view, ApplicationInfo info)
+	{
+		if(create)
+		{
+			CellLayout.LayoutParams params = new CellLayout.LayoutParams(dest.x, dest.y, 1, 1);
+			DesktopItem item = new DesktopItem(context,
+											   DesktopItem.USER_FOLDER,
+											   params, desktopNumber);
+			item.setApplicationInfo((ApplicationInfo)info);
+			item.setContext(context);
+			item.setIcon(((ApplicationInfo)info).icon);
+			item.setTitle(((ApplicationInfo)info).name);
+			Folder f = ((MyPlacesAdapter)myHome.getInstance().getWorkspace().
+							getMyPlacesGrid().getAdapter()).getFolder(item.getTitle());
+			item.setFolder(f);
+
+			item.getView().setOnClickListener(onClickListener);
+			item.getView().setOnLongClickListener(onLongClickListener);
+			
+			this.addView(item.getView());
+			
+			myHome.getInstance().storeAddItem(item);
+		}
+		else
+		{
+			DesktopItem item = (DesktopItem) view.getTag();
+			moveDesktopItem(item, dest);
+		}
+	}
 
 	@Override
 	public void onDrop(DragSource src, View view, Object info) {
@@ -208,20 +243,44 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		if(inDeletePosition(dragPosition))
 		{
 			Log.d("DeletePosition", "true");
-			deleteIfItem(view.getTag());
+			if(view.getTag() instanceof DesktopItem)
+				deleteIfItem(src, view.getTag());
+			else
+				deleteIfItem(src, info);
 			invalidate();
 			return;
 		}
 		
-		Point dest = calcDropCell(dragPosition);
+		Folder openedFolder = myHome.getInstance().getWorkspace().getOpenedFolder();
 		
-		if((src instanceof AppsGrid))
-			addDesktopShortcut(true, dest, view, (ApplicationInfo)info);
+		if(openedFolder != null)
+		{
+			if(info instanceof ApplicationInfo)
+			{
+				ApplicationInfo i = (ApplicationInfo)info;
+				
+				myHome.getInstance().storeAddShortcutToPlace(i.intent.toURI(), openedFolder);
+				
+				openedFolder.getAdapter().reload();
+				openedFolder.getAdapter().notifyDataSetChanged();
+				
+				Log.d("myHome", "Dropped into folder "+openedFolder.getTitle());
+			}
+		}
 		else
 		{
-			if(info instanceof DesktopItem)
+			Point dest = calcDropCell(dragPosition);
+			
+			if(src instanceof MyPlacesGrid)
+				addDesktopFolder(true, dest, view, (ApplicationInfo)info);
+			else if((src instanceof AppsGrid) || (src instanceof Folder))
+				addDesktopShortcut(true, dest, view, (ApplicationInfo)info);
+			else
 			{
-				moveDesktopItem((DesktopItem)info, dest);
+				if(info instanceof DesktopItem)
+				{
+					moveDesktopItem((DesktopItem)info, dest);
+				}
 			}
 		}
 		
@@ -246,9 +305,62 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		return false;
 	}
 	
-	private void deleteIfItem(Object info)
+	private void deleteIfItem(DragSource src, Object info)
 	{
-		if(info instanceof DesktopItem)
+		if(src instanceof AppsGrid)
+		{
+			AppsGrid grid = (AppsGrid)src;
+			
+			if(grid.getParent() instanceof Folder)
+			{
+				myHome.getInstance().storeRemoveShortcutFromPlace(
+										((ApplicationInfo)info).intent.toURI(),
+										((Folder)grid.getParent()));
+				((Folder)grid.getParent()).getAdapter().reload();
+				((Folder)grid.getParent()).getAdapter().notifyDataSetChanged();
+			}
+			else
+			{
+				AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+				String title = context.getResources().getString(R.string.dialog_title_uninstall);
+				String msg = context.getResources().getString(R.string.dialog_message_uninstall);
+
+				String ok = context.getResources().getString(R.string.dialog_button_ok);
+				String cancel = context.getResources().getString(R.string.dialog_button_cancel);
+
+				final ApplicationInfo appInfo = (ApplicationInfo)info;
+				
+				title += " '"+appInfo.name+"'";
+				
+				builder.setTitle(title);
+				builder.setMessage(msg);
+				
+				builder.setPositiveButton(ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+						
+						String pkg = null;
+						
+						PackageManager mgr = context.getPackageManager();
+						ResolveInfo res = mgr.resolveActivity(appInfo.intent, 0);
+						pkg = res.activityInfo.packageName;
+						
+						Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, Uri.parse("package:"+pkg));
+						context.startActivity(uninstallIntent);
+					}
+				});
+				
+				builder.setNegativeButton(cancel, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				});
+				
+				builder.create().show();
+			}
+		}
+		else if(info instanceof DesktopItem)
 		{
 			DesktopItem item = (DesktopItem)info;
 			
@@ -304,30 +416,33 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		dragPosition.x = position.x-dragModifier.x;
 		dragPosition.y = position.y-dragModifier.y;
 			
-		vacantCells = findAllVacantCells(null, null);
-			
-		int[] p = null;
-		
-		if(info instanceof DesktopItem)
+		if(myHome.getInstance().getWorkspace().getOpenedFolder() == null)
 		{
-			DesktopItem item = (DesktopItem)info;
-			p = findNearestVacantArea(dragPosition.x, dragPosition.y,
-					item.getLayoutParams().cellHSpan,
-					item.getLayoutParams().cellVSpan,
-					vacantCells, null);
+			vacantCells = findAllVacantCells(null, null);
+				
+			int[] p = null;
+			
+			if(info instanceof DesktopItem)
+			{
+				DesktopItem item = (DesktopItem)info;
+				p = findNearestVacantArea(dragPosition.x, dragPosition.y,
+						item.getLayoutParams().cellHSpan,
+						item.getLayoutParams().cellVSpan,
+						vacantCells, null);
+			}
+			else
+				p = findNearestVacantArea(dragPosition.x, dragPosition.y,
+						1, 1, vacantCells, null);
+					
+			int[] pixel = new int[2];
+			this.cellToPoint(p[0], p[1], pixel);
+					
+			estDropPosition.x = pixel[0];
+			estDropPosition.y = pixel[1];
+			
+			dragModifier.x = view.getWidth()/2;
+			dragModifier.y = view.getHeight()/2;
 		}
-		else
-			p = findNearestVacantArea(dragPosition.x, dragPosition.y,
-					1, 1, vacantCells, null);
-				
-		int[] pixel = new int[2];
-		this.cellToPoint(p[0], p[1], pixel);
-				
-		estDropPosition.x = pixel[0];
-		estDropPosition.y = pixel[1];
-		
-		dragModifier.x = view.getWidth()/2;
-		dragModifier.y = view.getHeight()/2;
 		
 		invalidate();
 	}
@@ -374,7 +489,8 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		if(dropInProgress && dropView != null && dragPosition != null)
 		{
 			if(dragViewAlphaBitmap != null && estDropPosition != null &&
-				!inDeletePosition(dragPosition))
+				!inDeletePosition(dragPosition) &&
+				myHome.getInstance().getWorkspace().getOpenedFolder() == null)
 				canvas.drawBitmap(dragViewAlphaBitmap, estDropPosition.x,
 						estDropPosition.y, null);
 			

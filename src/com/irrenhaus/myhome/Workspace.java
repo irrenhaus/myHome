@@ -42,11 +42,11 @@ public class Workspace extends LinearLayout
 	private boolean				diamondLayout = false;
 	
 	private AppsGrid			allAppsGrid = null;
+	private MyPlacesGrid		myPlacesGrid = null;
+	
+	private MyPlacesAdapter		myPlacesAdapter = null;
 	
 	private boolean				appsGridOpened = false;
-	
-	private ListView 			myPlacesList = null;
-	private MyPlacesAdapter		myPlacesAdapter = null;
 	
 	private boolean				dragInProgress = false;
 	private View				dragView = null;
@@ -57,6 +57,9 @@ public class Workspace extends LinearLayout
 	
 	private GestureDetector		gestureDetector = null;
 	private GestureListener		gestureListener = null;
+	
+	private	Folder				openedFolder;
+	private boolean				myPlacesOpened = false;
 	
 	public Workspace(Context context) {
 		super(context);
@@ -70,11 +73,6 @@ public class Workspace extends LinearLayout
 	{
 		this.home = home;
 		
-		//myPlacesList = (ListView)findViewById(R.id.myPlacesList);
-        
-        myPlacesAdapter = new MyPlacesAdapter(home);
-        //myPlacesList.setAdapter(myPlacesAdapter);
-        
         desktopView = new DesktopView[NUM_DESKTOPS];
         
         for(int i = 0; i < NUM_DESKTOPS; i++)
@@ -94,6 +92,14 @@ public class Workspace extends LinearLayout
         allAppsGrid.setAdapter(new AppsAdapter(home, null));
         allAppsGrid.setOnItemClickListener(this);
         allAppsGrid.setOnItemLongClickListener(this);
+
+        myPlacesGrid = new MyPlacesGrid(home);
+        myPlacesGrid.setDragController(this);
+        myPlacesGrid.setOnItemClickListener(this);
+        myPlacesGrid.setOnItemLongClickListener(this);
+
+        myPlacesAdapter = new MyPlacesAdapter(home);
+        myPlacesGrid.setAdapter(myPlacesAdapter);
         
         gestureListener = new GestureListener();
         gestureDetector = new GestureDetector(home, gestureListener);
@@ -113,8 +119,17 @@ public class Workspace extends LinearLayout
 		home.desktopChanged(diamondLayout, num);
 	}
 	
+	public void closeAllOpen()
+	{
+		closeMyPlaces();
+		closeAllAppsGrid();
+		//if(openedFolder != null)
+		//	closeFolder(openedFolder);
+	}
+	
 	public void openAllAppsGrid()
     {
+		closeAllOpen();
     	CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
     	((DesktopView)getCurrentDesktop()).addView(allAppsGrid, -1, lp);
     	appsGridOpened = true;
@@ -125,13 +140,52 @@ public class Workspace extends LinearLayout
     	((DesktopView)getCurrentDesktop()).removeView(allAppsGrid);
     	appsGridOpened = false;
     }
+
+	public void openMyPlaces() {
+		closeAllOpen();
+		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
+    	((DesktopView)getCurrentDesktop()).addView(myPlacesGrid, -1, lp);
+		myPlacesOpened = true;
+	}
+
+	public void closeMyPlaces() {
+    	((DesktopView)getCurrentDesktop()).removeView(myPlacesGrid);
+		myPlacesOpened = false;
+	}
+
+	public boolean isMyPlacesOpened() {
+		return myPlacesOpened;
+	}
+    
+    public void openFolder(final Folder f)
+    {
+		closeAllOpen();
+		
+		if(openedFolder != null)
+			closeFolder(openedFolder);
+    	
+		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
+		((DesktopView)getCurrentDesktop()).addView(f, -1, lp);
+		openedFolder = f;
+
+		openedFolder.setOnItemClickListener(this);
+		openedFolder.setOnItemLongClickListener(this);
+		openedFolder.setDragController(this);
+    }
+    
+    public void closeFolder(final Folder f)
+    {
+    	((DesktopView)getCurrentDesktop()).removeView(f);
+		openedFolder = null;
+    }
     
     @Override
 	public void onDragBegin(DragSource src, View view, Object info) {
 		closeAllAppsGrid();
+		closeMyPlaces();
 		
 		Vibrator vibrator = (Vibrator)home.getSystemService(Context.VIBRATOR_SERVICE);
-		vibrator.vibrate(100);
+		vibrator.vibrate(50);
 		
 		dragInProgress = true;
 		
@@ -225,14 +279,33 @@ public class Workspace extends LinearLayout
 	
 	public boolean onItemLongClick(AdapterView<?> parent, View view,
 				int position, long id) {
-		onDragBegin((DragSource)parent, view, parent.getAdapter().getItem(position));
+		
+		if(parent instanceof DragSource)
+		{
+			if(parent.getParent() instanceof Folder)
+				onDragBegin((DragSource)parent.getParent(), view,
+							parent.getAdapter().getItem(position));
+			else
+				onDragBegin((DragSource)parent, view, parent.getAdapter().getItem(position));
+		}
 			
 		return true;
 	}
 	
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 				long id) {
-		home.startActivity(((ApplicationInfo)parent.getAdapter().getItem(position)).intent);
+		
+		if(parent instanceof MyPlacesGrid)
+		{
+			Folder f = ((MyPlacesAdapter)parent.getAdapter()).getFolder(position);
+			closeAllOpen();
+			openFolder(f);
+		}
+		else if(parent instanceof AppsGrid)
+		{
+			closeAllOpen();
+			home.startActivity(((ApplicationInfo)parent.getAdapter().getItem(position)).intent);
+		}
 	}
 
 	public void onClick(View v) {
@@ -240,11 +313,18 @@ public class Workspace extends LinearLayout
 		
 		if((tag instanceof DesktopItem))
 		{
+			Log.d("myHome", "OnClickDesktopItem");
 			final DesktopItem item = (DesktopItem) tag;
 			if(item.getType() == DesktopItem.APPLICATION_SHORTCUT)
 			{
 				closeAllAppsGrid();
 				home.startActivity(item.getLaunchIntent());
+			}
+			else if(item.getType() == DesktopItem.USER_FOLDER)
+			{
+				Log.d("myHome", "OnClickFolder");
+				closeAllOpen();
+				openFolder(item.getFolder());
 			}
 		}
 	}
@@ -285,7 +365,6 @@ public class Workspace extends LinearLayout
 				try {
 					Thread.sleep(150);
 				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 				
@@ -337,6 +416,29 @@ public class Workspace extends LinearLayout
 		    				}
 		    			}
 		    		}
+		    		else if(type == DesktopItem.USER_FOLDER)
+		    		{
+		    			final ApplicationInfo info = AppsCache.getInstance().new ApplicationInfo();
+		    			info.filtered = true;
+		    			info.isFolder = true;
+		    			info.icon = Folder.getIcon(home);
+		    			info.name = intentUri;
+		    			
+		    			if(info != null)
+		    			{
+		    				if(desktop >= 0 && desktop < NUM_DESKTOPS)
+		    				{
+								final DesktopView d = getDesktop(desktop);
+		    					home.runOnUiThread(new Runnable() {
+									public void run() {
+				    					Point to = new Point(params.cellX, params.cellY);
+				    					
+				    					d.addDesktopFolder(true, to, null, info);
+									}
+		    					});
+		    				}
+		    			}
+		    		}
 		    		else if(type == DesktopItem.APP_WIDGET)
 		    		{
 		    			final int widgetid = Integer.parseInt(intentUri);
@@ -373,9 +475,11 @@ public class Workspace extends LinearLayout
 	@Override
 	public void loadingDone() {
 		((AppsAdapter)allAppsGrid.getAdapter()).reload();
+		((MyPlacesAdapter)myPlacesGrid.getAdapter()).reload();
 		home.runOnUiThread(new Runnable() {
 			public void run() {
 				((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
+				((MyPlacesAdapter)myPlacesGrid.getAdapter()).notifyDataSetChanged();
 			}
 		});
 		loadWorkspaceDatabase();
@@ -402,7 +506,7 @@ public class Workspace extends LinearLayout
 		{
 			Log.d("myHome", "onFling: "+velocityX+", "+velocityY);
 			
-			if(isAppsGridOpened())
+			if(isAppsGridOpened() || isMyPlacesOpened())
 				return false;
 			
 			if(Math.abs(velocityX) > Math.abs(velocityY))
@@ -442,5 +546,13 @@ public class Workspace extends LinearLayout
 			
 			return true;
 		}
+	}
+
+	public MyPlacesGrid getMyPlacesGrid() {
+		return myPlacesGrid;
+	}
+
+	public Folder getOpenedFolder() {
+		return openedFolder;
 	}
 }

@@ -6,4 +6,13 @@
 <string name="myPlacesAllApps">All apps</string>
 <string name="no_vacant_cells">Sorry, not enough free space on the desktop!</string>
 <string name="menu_entry_settings">Settings</string>
+<string name="dialog_title_add_place">Name your MyPlace</string>
+<string name="dialog_button_ok">Ok</string>
+<string name="dialog_button_cancel">Cancel</string>
+<string name="dialog_button_add">Add</string>
+<string name="menu_entry_add_place">Add MyPlace</string>
+<string name="fatal_crash_message">MyHome crashed unfortunately. I'm sorry about that.</string>
+<string name="fatal_crash_title">Fatal Crash</string>
+<string name="dialog_title_uninstall">Uninstall</string>
+<string name="dialog_message_uninstall">Do you really want to uninstall this application?</string>
 </resources>

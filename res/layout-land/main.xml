@@ -21,6 +21,9 @@
 			<Button android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:id="@+id/openAllAppsGridButton"
 				android:text="apps"></Button>
+			<Button android:layout_width="wrap_content"
+				android:layout_height="wrap_content" android:id="@+id/openMyPlacesButton"
+				android:text="places"></Button>
 				
 			<ImageView android:id="@+id/desktopOverview"
 				android:layout_height="128dip" android:layout_width="fill_parent"

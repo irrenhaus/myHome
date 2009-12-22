@@ -202,11 +202,22 @@ public class AppsCache implements Runnable {
 		public Drawable icon = null;
 		public Intent	intent = null;
 		public boolean	filtered = false;
+		public boolean	isFolder = false;
+		
+		public ApplicationInfo()
+		{
+			name = null;
+			icon = null;
+			intent = null;
+			filtered = false;
+			isFolder = false;
+		}
 		
 		public boolean equals(ApplicationInfo info)
 		{
 			return ((name.equals(info.name)) &&
-					(intent.toURI().equals(info.intent.toURI())));
+					(intent.toURI().equals(info.intent.toURI())) &&
+					(isFolder == info.isFolder));
 		}
 	}
 }

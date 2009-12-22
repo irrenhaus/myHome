@@ -3,11 +3,13 @@ package com.irrenhaus.myhome;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
@@ -19,8 +21,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
 
@@ -45,7 +50,8 @@ public class myHome extends Activity {
 	
 	private static myHome			instance;
 
-	private static final int		MENU_ENTRY_SETTINGS_ID = R.string.menu_entry_settings;
+	private static final int		MENU_ENTRY_SETTINGS = R.string.menu_entry_settings;
+	private static final int		MENU_ENTRY_ADD_PLACE = R.string.menu_entry_add_place;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,6 +62,8 @@ public class myHome extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         
         setContentView(R.layout.main);
+        
+        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
         
         AppsCache.getInstance().setContext(getApplicationContext());
         
@@ -71,6 +79,16 @@ public class myHome extends Activity {
 					workspace.closeAllAppsGrid();
 				else
 					workspace.openAllAppsGrid();
+			}
+        });
+        
+        Button myPlacesButton = (Button)findViewById(R.id.openMyPlacesButton);
+        myPlacesButton.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				if(workspace.isMyPlacesOpened())
+					workspace.closeMyPlaces();
+				else
+					workspace.openMyPlaces();
 			}
         });
 
@@ -102,8 +120,69 @@ public class myHome extends Activity {
     	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
     			Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
     	
-    	menu.add(1, MENU_ENTRY_SETTINGS_ID,
-    			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS_ID)).setIntent(intent);
+    	menu.add(1, MENU_ENTRY_SETTINGS,
+    			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS)).setIntent(intent);
+    	
+    	menu.add(1, MENU_ENTRY_ADD_PLACE, ContextMenu.NONE,
+    			 res.getString(MENU_ENTRY_ADD_PLACE)).setOnMenuItemClickListener(
+    					 new OnMenuItemClickListener() {
+							public boolean onMenuItemClick(MenuItem arg0) {
+								AlertDialog.Builder builder =
+									new AlertDialog.Builder(myHome.this);
+								
+								LinearLayout l = new LinearLayout(myHome.this);
+								
+								l.setLayoutParams(new LinearLayout.LayoutParams(
+														LayoutParams.FILL_PARENT,
+														LayoutParams.FILL_PARENT));
+								
+								final EditText edit = new EditText(myHome.this);
+								
+								l.addView(edit);
+								
+								builder.setTitle(myHome.this.getResources().
+										getString(R.string.dialog_title_add_place));
+								builder.setView(l);
+
+								String pos = myHome.this.getResources().getString(
+													R.string.dialog_button_add);
+								String neg = myHome.this.getResources().getString(
+										R.string.dialog_button_cancel);
+								
+								builder.setPositiveButton(pos,
+										new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int which) {
+										Folder f = new Folder(myHome.this,
+																edit.getText().toString());
+										storeAddPlace(f);
+										
+										myHome.this.runOnUiThread(new Runnable() {
+											public void run() {
+												MyPlacesGrid grid = myHome.this.workspace.
+																		getMyPlacesGrid();
+												
+												((MyPlacesAdapter)grid.getAdapter()).reload();
+												((MyPlacesAdapter)grid.getAdapter()).
+														notifyDataSetChanged();
+											}
+										});
+										
+										dialog.cancel();
+									}
+								});
+								
+								builder.setNegativeButton(neg,
+										new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.cancel();
+									}
+								});
+								
+								builder.create().show();
+								
+								return true;
+							}
+    					 });
     	
     	return true;
     }
@@ -175,7 +254,7 @@ public class myHome extends Activity {
     	}
 	}
     
-    private boolean existsInDatabase(ContentValues values)
+    private boolean itemExistsInDatabase(ContentValues values)
     {
     	openDatabase();
     	
@@ -184,6 +263,47 @@ public class myHome extends Activity {
     						DesktopItem.TYPE+"=? AND "+DesktopItem.INTENT+"=?",
     						new String[] { String.valueOf(values.getAsInteger(DesktopItem.TYPE)),
     								values.getAsString(DesktopItem.INTENT)},
+    						null, null, null);
+    	
+    	if(c.moveToFirst())
+    	{
+    		c.close();
+    		return true;
+    	}
+    	
+    	c.close();
+    	return false;
+    }
+    
+    private boolean folderExistsInDatabase(ContentValues values)
+    {
+    	openDatabase();
+    	
+    	Cursor c = db.query(MyHomeDB.FOLDER_DEFINITION_TABLE,
+    						new String[] {Folder.TITLE},
+    						Folder.TITLE+"=?",
+    						new String[] {values.getAsString(Folder.TITLE)},
+    						null, null, null);
+    	
+    	if(c.moveToFirst())
+    	{
+    		c.close();
+    		return true;
+    	}
+    	
+    	c.close();
+    	return false;
+    }
+    
+    private boolean itemExistsInPlace(ContentValues values)
+    {
+    	openDatabase();
+    	
+    	Cursor c = db.query(MyHomeDB.FOLDER_TABLE,
+    						new String[] {Folder.TITLE, Folder.INTENT},
+    						Folder.TITLE+"=? AND "+Folder.INTENT+"=?",
+    						new String[] {values.getAsString(Folder.TITLE),
+    									  values.getAsString(Folder.INTENT)},
     						null, null, null);
     	
     	if(c.moveToFirst())
@@ -204,7 +324,7 @@ public class myHome extends Activity {
     	
     	ContentValues values = item.makeContentValues();
     	
-    	if(!existsInDatabase(values))
+    	if(!itemExistsInDatabase(values))
     		db.insert(MyHomeDB.WORKSPACE_TABLE, null, values);
     }
 
@@ -232,6 +352,65 @@ public class myHome extends Activity {
 		db.delete(MyHomeDB.WORKSPACE_TABLE, DesktopItem.TYPE+"=? AND "+DesktopItem.INTENT+"=?",
 				new String[] { String.valueOf(values.getAsInteger(DesktopItem.TYPE)),
 								values.getAsString(DesktopItem.INTENT)});
+    }
+    
+
+
+    public boolean storeAddPlace(Folder folder)
+    {
+    	openDatabase();
+    	
+    	ContentValues values = new ContentValues();
+    	values.put(Folder.TITLE, folder.getTitle());
+    	
+    	if(!folderExistsInDatabase(values))
+    		db.insert(MyHomeDB.FOLDER_DEFINITION_TABLE, null, values);
+    	else
+    		return false;
+    	
+    	return true;
+    }
+
+    public void storeUpdatePlace(String oldName, Folder folder)
+    {
+    	openDatabase();
+    	
+    	ContentValues values = new ContentValues();
+    	values.put(Folder.TITLE, folder.getTitle());
+		
+		db.update(MyHomeDB.FOLDER_DEFINITION_TABLE, values, Folder.TITLE+"=?",
+				new String[] {oldName});
+    }
+    
+    public void storeRemovePlace(Folder folder)
+    {
+    	openDatabase();
+    	
+    	ContentValues values = new ContentValues();
+    	values.put(Folder.TITLE, folder.getTitle());
+    	
+		db.delete(MyHomeDB.FOLDER_DEFINITION_TABLE, Folder.TITLE+"=?",
+				new String[] {folder.getTitle()});
+    }
+    
+    public void storeAddShortcutToPlace(String intent, Folder folder)
+    {
+    	openDatabase();
+    	
+    	ContentValues values = new ContentValues();
+    	values.put(Folder.TITLE, folder.getTitle());
+    	values.put(Folder.INTENT, intent);
+    	
+    	if(!itemExistsInPlace(values))
+    		db.insert(MyHomeDB.FOLDER_TABLE, null, values);
+    }
+    
+    public void storeRemoveShortcutFromPlace(String intent, Folder folder)
+    {
+    	openDatabase();
+    	
+		db.delete(MyHomeDB.FOLDER_TABLE, Folder.TITLE+"=? AND "+Folder.INTENT+"=?",
+				new String[] {folder.getTitle(), intent});
     }
     
     @Override

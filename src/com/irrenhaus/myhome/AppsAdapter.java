@@ -12,14 +12,14 @@ import android.widget.TextView;
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
 public class AppsAdapter extends BaseAdapter {
-	private Context context = null;
-	private String  filter = null;
+	private Context 	context = null;
+	private AppsFilter	filter = null;
 	
 	private Vector<ApplicationInfo> apps;
 	
 	private AppsCache cache = AppsCache.getInstance();
 	
-	public AppsAdapter(Context context, String filter)
+	public AppsAdapter(Context context, AppsFilter filter)
 	{
 		super();
 		
@@ -28,7 +28,7 @@ public class AppsAdapter extends BaseAdapter {
 		apps = new Vector<ApplicationInfo>();
 	}
 	
-	public void setFilter(String filter)
+	public void setFilter(AppsFilter filter)
 	{
 		this.filter = filter;
 	}
@@ -36,10 +36,19 @@ public class AppsAdapter extends BaseAdapter {
 	public void reload()
 	{
 		apps.clear();
+		if(filter != null)
+			filter.init();
+		
 		for(int i = 0; i < cache.getAppCount(); i++)
 		{
-			apps.add(cache.getAppInfo(i));
+			ApplicationInfo info = cache.getAppInfo(i);
+			
+			if(filter == null || filter.filterApplicationInfo(info))
+				apps.add(info);
 		}
+		
+		if(filter != null)
+			filter.done();
 	}
 	
 	public void add(ApplicationInfo info)

@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
@@ -45,6 +46,8 @@ public class DesktopItem {
 	
 	private int						desktopNumber;
 	
+	private Folder					folder;
+	
 	private Context					context;
 	
 	public DesktopItem(Context context, int type,
@@ -59,13 +62,44 @@ public class DesktopItem {
 	public View getView()
 	{
 		if(type == APP_WIDGET)
-		{
 			view = appWidgetView;
-		}
 		
 		if(view == null)
 		{
 			if(type == APPLICATION_SHORTCUT)
+			{
+				TextView v = new TextView(context);
+				
+				v.setText(title);
+				
+				final Bitmap.Config c = icon.getOpacity() != PixelFormat.OPAQUE ?
+		                				Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
+				
+				int width = (int) context.getResources().getDimension(android.R.dimen.app_icon_size);
+		        int height = (int) context.getResources().getDimension(android.R.dimen.app_icon_size);
+
+		        Bitmap bmp = Bitmap.createBitmap(width, height, c);
+				Canvas can = new Canvas(bmp);
+				Rect bounds = new Rect();
+				bounds.set(icon.getBounds());
+				icon.setBounds(0, 0, width, height);
+				icon.draw(can);
+				icon.setBounds(bounds);
+				
+				v.setCompoundDrawablesWithIntrinsicBounds(null,
+														  new BitmapDrawable(bmp),
+														  null,
+														  null);
+
+				v.setSingleLine();
+
+				v.setGravity(Gravity.CENTER);
+				
+				v.setLayoutParams(layoutParams);
+				
+				view = v;
+			}
+			else if(type == USER_FOLDER)
 			{
 				TextView v = new TextView(context);
 				
@@ -213,6 +247,8 @@ public class DesktopItem {
 			intent = String.valueOf(getAppWidgetId());
 		if(type == APPLICATION_SHORTCUT)
 			intent = launchIntent.toURI();
+		if(type == USER_FOLDER)
+			intent = folder.getTitle();
 		
 		values.put(DesktopItem.INTENT, intent);
 		values.put(DesktopItem.LAYOUT_PARAMS, params);
@@ -228,5 +264,17 @@ public class DesktopItem {
 
 	public void setDesktopNumber(int desktopNumber) {
 		this.desktopNumber = desktopNumber;
+	}
+
+	public void setFolder(Folder folder) {
+		this.folder = folder;
+		
+		this.title = folder.getTitle();
+		//TODO: Folder icon
+		this.icon = context.getResources().getDrawable(R.drawable.desktop_icon);
+	}
+
+	public Folder getFolder() {
+		return folder;
 	}
 }

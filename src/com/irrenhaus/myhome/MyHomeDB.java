@@ -8,9 +8,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class MyHomeDB extends SQLiteOpenHelper {
-	public static final int		MYHOME_DB_VERSION = 3;
+	public static final int		MYHOME_DB_VERSION = 4;
 	
 	public static final String 	WORKSPACE_TABLE = "workspace_data";
+
+	public static final String	FOLDER_TABLE = "folder_data";
+
+	public static final String	FOLDER_DEFINITION_TABLE = "folder_definition";
 	
 	public MyHomeDB(Context context) {
 		super(context, "myhome.db", null, MYHOME_DB_VERSION);
@@ -29,14 +33,29 @@ public class MyHomeDB extends SQLiteOpenHelper {
 				   DesktopView.DESKTOP_NUMBER + " INTEGER," +
 				   DesktopItem.INTENT + " TEXT," +
 				   DesktopItem.LAYOUT_PARAMS + " TEXT," +
-				   DesktopItem.TYPE + " INTEGER)" +
-				   ";");
+				   DesktopItem.TYPE + " INTEGER" +
+				   ");");
+		
+		db.execSQL("CREATE TABLE " + FOLDER_DEFINITION_TABLE + " (" +
+				   Folder.TITLE + " TEXT" +
+				   ");");
+		
+		db.execSQL("CREATE TABLE " + FOLDER_TABLE + " (" +
+				   Folder.TITLE + " TEXT," +
+				   Folder.INTENT + " TEXT" +
+				   ");");
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		db.execSQL("DELETE FROM " + WORKSPACE_TABLE + " WHERE " + DesktopItem.TYPE +
-				"='" + String.valueOf(DesktopItem.APP_WIDGET) + "';");
+		db.execSQL("CREATE TABLE " + FOLDER_DEFINITION_TABLE + " (" +
+				   Folder.TITLE + " TEXT" +
+				   ");");
+		
+		db.execSQL("CREATE TABLE " + FOLDER_TABLE + " (" +
+				   Folder.TITLE + " TEXT" +
+				   Folder.INTENT + " TEXT" +
+				   ");");
 	}
 	
 	public static String layoutParams2String(CellLayout.LayoutParams params)
