@@ -15,10 +15,8 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.os.Looper;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,28 +30,28 @@ import android.widget.LinearLayout;
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
 
 public class myHome extends Activity {
-	private Workspace				workspace = null;
-	private Screen					screen = null;
+	private Workspace					workspace = null;
+	private Screen						screen = null;
 
-	private static AppWidgetHost	appWidgetHost = null;
-	private static final int		appWidgetHostID = 1337;
+	private static MyHomeAppWidgetHost	appWidgetHost = null;
+	private static final int			appWidgetHostID = 1337;
 
-	private static final int		PICK_WIDGET = 10;
+	private static final int			PICK_WIDGET = 10;
 
-	public  static final int		ADD_WIDGET = 20;
+	public  static final int			ADD_WIDGET = 20;
 	
-	private	AppWidgetHostView		hostViewTmp;
-	private AppWidgetProviderInfo	providerInfoTmp;
-	private CellLayout.LayoutParams paramsTmp;
+	private	MyHomeAppWidgetHostView		hostViewTmp;
+	private AppWidgetProviderInfo		providerInfoTmp;
+	private CellLayout.LayoutParams	 	paramsTmp;
 
-	private MyHomeDB 				homeDb;
+	private MyHomeDB 					homeDb;
 
-	private SQLiteDatabase 			db;
+	private SQLiteDatabase 				db;
 	
-	private static myHome			instance;
+	private static myHome				instance;
 
-	private static final int		MENU_ENTRY_SETTINGS = R.string.menu_entry_settings;
-	private static final int		MENU_ENTRY_ADD_PLACE = R.string.menu_entry_add_place;
+	private static final int			MENU_ENTRY_SETTINGS = R.string.menu_entry_settings;
+	private static final int			MENU_ENTRY_ADD_PLACE = R.string.menu_entry_add_place;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -69,10 +67,10 @@ public class myHome extends Activity {
         
         AppsCache.getInstance().setContext(getApplicationContext());
         
-        screen = (Screen)findViewById(R.id.screen);
-        
         workspace = (Workspace)findViewById(R.id.workspace);
         workspace.setHome(this);
+        
+        screen = (Screen)findViewById(R.id.screen);
         
         ImageView appsGridButton = (ImageView)findViewById(R.id.openAllAppsGridButton);
         appsGridButton.setOnClickListener(new OnClickListener() {
@@ -101,7 +99,7 @@ public class myHome extends Activity {
         mgr.setActivity(this);
         mgr.get();
         
-        myHome.setAppWidgetHost(new AppWidgetHost(this, myHome.appWidgetHostID));
+        myHome.setAppWidgetHost(new MyHomeAppWidgetHost(this, myHome.appWidgetHostID));
         
 		if(!AppsCache.getInstance().isLoadingDone())
 			AppsCache.getInstance().start();
@@ -114,6 +112,11 @@ public class myHome extends Activity {
     public static myHome getInstance()
     {
     	return instance;
+    }
+    
+    public boolean isDiamondLayout()
+    {
+    	return false;
     }
     
     public boolean onCreateOptionsMenu(Menu menu)
@@ -236,7 +239,9 @@ public class myHome extends Activity {
 					{
 						AppWidgetProviderInfo appWidget = AppWidgetManager.getInstance(myHome.this).getAppWidgetInfo(widgetid);
 						
-						AppWidgetHostView view = myHome.getAppWidgetHost().createView(myHome.this, widgetid,
+						MyHomeAppWidgetHostView view = (MyHomeAppWidgetHostView)myHome.
+													getAppWidgetHost().
+													createView(myHome.this, widgetid,
 													appWidget);
 						view.setAppWidget(widgetid, appWidget);
 						
@@ -440,11 +445,11 @@ public class myHome extends Activity {
 		return appWidgetHost;
 	}
 
-	public static void setAppWidgetHost(AppWidgetHost appWidgetHost) {
+	public static void setAppWidgetHost(MyHomeAppWidgetHost appWidgetHost) {
 		myHome.appWidgetHost = appWidgetHost;
 	}
 
-	public void startWidgetConfigure(Intent intent, AppWidgetHostView view,
+	public void startWidgetConfigure(Intent intent, MyHomeAppWidgetHostView view,
 			AppWidgetProviderInfo info, LayoutParams params) {
 		hostViewTmp = view;
 		providerInfoTmp = info;
@@ -455,5 +460,9 @@ public class myHome extends Activity {
 	
 	public Workspace getWorkspace() {
 		return workspace;
+	}
+
+	public Screen getScreen() {
+		return screen;
 	}
 }

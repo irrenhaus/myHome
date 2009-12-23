@@ -1,19 +1,15 @@
 package com.irrenhaus.myhome;
 
-import android.app.AlertDialog;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Point;
-import android.net.Uri;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +26,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	private boolean			dropInProgress = false;
 	private boolean			dragInProgress = false;
 	private Point			dragPosition = null;
-	private Point			dragModifier = null;
 	private View			dropView = null;
 	private Object			dragInfo = null;
 	
@@ -40,8 +35,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 	private Point           estDropPosition;
 
-	private Bitmap          dragViewBitmap;
-	private Bitmap          dragViewAlphaBitmap;
 	private OnClickListener onClickListener;
 	private OnLongClickListener onLongClickListener;
 	
@@ -93,14 +86,14 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			getChildAt(i).setOnLongClickListener(l);
 	}
 	
-	public void addAppWidget(AppWidgetHostView view, AppWidgetProviderInfo info, int id)
+	public void addAppWidget(MyHomeAppWidgetHostView view, AppWidgetProviderInfo info, int id)
 	{
 		int span[] = this.rectToCell(info.minWidth, info.minHeight);
 		
 		vacantCells = this.findAllVacantCells(null, null);
 		
-		final Point p = new Point((int)myHome.getInstance().getWorkspace().getClickX(),
-								(int)myHome.getInstance().getWorkspace().getClickY());
+		final Point p = new Point((int)myHome.getInstance().getScreen().getClickX(),
+								(int)myHome.getInstance().getScreen().getClickY());
 		
 		int cell[] = findNearestVacantArea(p.x, p.y, span[0], span[1], vacantCells, null);
 		
@@ -116,7 +109,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		addAppWidget(view, info, id, to, size);
 	}
 	
-	public void addAppWidget(AppWidgetHostView view,
+	public void addAppWidget(MyHomeAppWidgetHostView view,
 			AppWidgetProviderInfo info, int id, Point to, Point size) {
 		CellLayout.LayoutParams params = new CellLayout.LayoutParams(to.x, to.y, size.x, size.y);
 		
@@ -136,7 +129,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		}
 	}
 	
-	public void completeAddWidget(AppWidgetHostView view,
+	public void completeAddWidget(MyHomeAppWidgetHostView view,
 			AppWidgetProviderInfo info, int id, CellLayout.LayoutParams params)
 	{
 		DesktopItem item = new DesktopItem(context, DesktopItem.APP_WIDGET, params, desktopNumber);
@@ -268,17 +261,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		dropInProgress = false;
 		dropView.setDrawingCacheEnabled(false);
 		
-		if(inDeletePosition(dragPosition))
-		{
-			Log.d("DeletePosition", "true");
-			if(view.getTag() instanceof DesktopItem)
-				deleteIfItem(src, view.getTag());
-			else
-				deleteIfItem(src, info);
-			invalidate();
-			return;
-		}
-		
 		Folder openedFolder = myHome.getInstance().getWorkspace().getOpenedFolder();
 		
 		if(openedFolder != null)
@@ -315,135 +297,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		invalidate();
 	}
 	
-	private boolean inDeletePosition(Point p)
-	{
-		boolean land = getWidth() > getHeight();
-		
-		if(land)
-		{
-			if(p.x > (getWidth()-54))
-				return true;
-		}
-		else
-		{
-			if(p.y > (getHeight()-54))
-				return true;
-		}
-		
-		return false;
-	}
-	
-	private void deleteIfItem(DragSource src, Object info)
-	{
-		if(src instanceof AppsGrid)
-		{
-			AppsGrid grid = (AppsGrid)src;
-
-			final ApplicationInfo appInfo = (ApplicationInfo)info;
-			
-			if(grid instanceof MyPlacesGrid)
-			{
-				String title = context.getResources().getString(R.string.dialog_title_rm_place);
-				String msg = context.getResources().getString(R.string.dialog_message_rm_place);
-
-				String ok = context.getResources().getString(R.string.dialog_button_ok);
-				String cancel = context.getResources().getString(R.string.dialog_button_cancel);
-				
-				title += " '"+appInfo.name+"'";
-				
-				AlertDialog.Builder builder = new AlertDialog.Builder(context);
-				
-				builder.setTitle(title);
-				builder.setMessage(msg);
-				
-				builder.setPositiveButton(ok, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-						
-						Folder f = ((MyPlacesAdapter)myHome.getInstance().getWorkspace().
-								getMyPlacesGrid().getAdapter()).getFolder(appInfo.name);
-				
-						myHome.getInstance().storeRemovePlace(f);
-						
-						MyPlacesAdapter a = (MyPlacesAdapter) myHome.getInstance().getWorkspace().
-												getMyPlacesGrid().getAdapter();
-						a.reload();
-						a.notifyDataSetChanged();
-						
-						myHome.getInstance().getWorkspace().removeAllDesktopFolders(f);
-					}
-				});
-				
-				builder.setNegativeButton(cancel, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				});
-				
-				builder.create().show();
-			}
-			else if(grid.getParent() instanceof Folder)
-			{
-				myHome.getInstance().storeRemoveShortcutFromPlace(
-										((ApplicationInfo)info).intent.toURI(),
-										((Folder)grid.getParent()));
-				((Folder)grid.getParent()).getAdapter().reload();
-				((Folder)grid.getParent()).getAdapter().notifyDataSetChanged();
-			}
-			else
-			{
-				AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
-				String title = context.getResources().getString(R.string.dialog_title_uninstall);
-				String msg = context.getResources().getString(R.string.dialog_message_uninstall);
-
-				String ok = context.getResources().getString(R.string.dialog_button_ok);
-				String cancel = context.getResources().getString(R.string.dialog_button_cancel);
-				
-				title += " '"+appInfo.name+"'";
-				
-				builder.setTitle(title);
-				builder.setMessage(msg);
-				
-				builder.setPositiveButton(ok, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-						
-						String pkg = null;
-						
-						PackageManager mgr = context.getPackageManager();
-						ResolveInfo res = mgr.resolveActivity(appInfo.intent, 0);
-						pkg = res.activityInfo.packageName;
-						
-						Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, Uri.parse("package:"+pkg));
-						context.startActivity(uninstallIntent);
-					}
-				});
-				
-				builder.setNegativeButton(cancel, new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-					}
-				});
-				
-				builder.create().show();
-			}
-		}
-		else if(info instanceof DesktopItem)
-		{
-			DesktopItem item = (DesktopItem)info;
-			
-			if(item.getType() == DesktopItem.APP_WIDGET)
-			{
-				int id = item.getAppWidgetId();
-				item.setAppWidgetView(null);
-				myHome.getAppWidgetHost().deleteAppWidgetId(id);
-			}
-			
-			myHome.getInstance().storeRemoveItem(item);
-		}
-	}
-	
 	private Point calcDropCell(Point drop)
 	{
 		Point ret = new Point();
@@ -468,11 +321,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		estDropPosition = new Point();
 		
 		vacantCells = this.findAllVacantCells(null, null);
-		
-		dragViewBitmap = null;
-		dragViewAlphaBitmap = null;
-		
-		dragModifier = new Point();
 	}
 
 	@Override
@@ -482,8 +330,8 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 	@Override
 	public void onDragMovement(View view, Object info, Point position) {
-		dragPosition.x = position.x-dragModifier.x;
-		dragPosition.y = position.y-dragModifier.y;
+		dragPosition.x = position.x;
+		dragPosition.y = position.y;
 			
 		if(myHome.getInstance().getWorkspace().getOpenedFolder() == null)
 		{
@@ -508,9 +356,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 					
 			estDropPosition.x = pixel[0];
 			estDropPosition.y = pixel[1];
-			
-			dragModifier.x = view.getWidth()/2;
-			dragModifier.y = view.getHeight()/2;
 		}
 		
 		invalidate();
@@ -524,48 +369,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		}
 		
 		return color-64;
-	}
-	
-	@Override
-	protected void dispatchDraw(Canvas canvas)
-	{
-		super.dispatchDraw(canvas);
-		
-		if((dragViewBitmap == null || dragViewAlphaBitmap == null) && dropView != null)
-		{
-			dragViewBitmap = dropView.getDrawingCache();
-			dragViewAlphaBitmap = Bitmap.createBitmap(
-				dragViewBitmap.getWidth(), dragViewBitmap.getHeight(), dragViewBitmap.getConfig());
-		
-		
-			for(int x = 0; x < dragViewBitmap.getWidth(); x++)
-			{
-				for(int y = 0; y < dragViewBitmap.getHeight(); y++)
-				{
-					int c = dragViewBitmap.getPixel(x, y);
-					int a = Color.alpha(c);
-					int r = darkenIt(Color.red(c));
-					int g = darkenIt(Color.green(c));
-					int b = darkenIt(Color.blue(c));
-					if(a > 220) 
-						a -= 128;
-					int nc = Color.argb(a, r, g, b);
-					dragViewAlphaBitmap.setPixel(x, y, nc);
-				}
-			}
-		}
-		
-		if(dropInProgress && dropView != null && dragPosition != null)
-		{
-			if(dragViewAlphaBitmap != null && estDropPosition != null &&
-				!inDeletePosition(dragPosition) &&
-				myHome.getInstance().getWorkspace().getOpenedFolder() == null)
-				canvas.drawBitmap(dragViewAlphaBitmap, estDropPosition.x,
-						estDropPosition.y, null);
-			
-			canvas.drawBitmap(dragViewBitmap, dragPosition.x,
-								   dragPosition.y, null);
-		}
 	}
 	
 	@Override
@@ -590,5 +393,13 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 	public void setDesktopNumber(int desktopNumber) {
 		this.desktopNumber = desktopNumber;
+	}
+
+	public Point getDragPosition() {
+		return dragPosition;
+	}
+
+	public Point getEstDropPosition() {
+		return estDropPosition;
 	}
 }

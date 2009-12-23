@@ -88,14 +88,14 @@ public class DesktopItem {
 			}
 		}
 		
-		view.setFocusable(true);
+		view.setFocusable(false);
 		
 		view.setTag(this);
 		
 		return view;
 	}
 	
-	public void setAppWidget(AppWidgetProviderInfo info, AppWidgetHostView view, int id)
+	public void setAppWidget(AppWidgetProviderInfo info, MyHomeAppWidgetHostView view, int id)
 	{
 		appWidgetView = view;
 		appWidgetInfo = info;

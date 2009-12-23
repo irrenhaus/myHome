@@ -29,7 +29,7 @@ import android.widget.AdapterView.OnItemLongClickListener;
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
 public class Workspace extends ViewGroup
-					   implements DragController, ApplicationLoadingListener,
+					   implements ApplicationLoadingListener,
 					   			  OnClickListener, OnLongClickListener,
 					   			  OnItemClickListener, OnItemLongClickListener{
 	public static final int		NUM_DESKTOPS = 3;
@@ -37,7 +37,6 @@ public class Workspace extends ViewGroup
 	
 	private DesktopView[] 		desktopView = null;
 	private int					currentDesktop = DEFAULT_DESKTOP;
-	private boolean				diamondLayout = false;
 	
 	private AppsGrid			allAppsGrid = null;
 	private MyPlacesGrid		myPlacesGrid = null;
@@ -46,21 +45,11 @@ public class Workspace extends ViewGroup
 	
 	private boolean				appsGridOpened = false;
 	
-	private boolean				dragInProgress = false;
-	private View				dragView = null;
-	private Object				dragInfo = null;
-	private DragSource			dragSource = null;
-	
 	private myHome				home = null;
 	
 	private	Folder				openedFolder;
 	private boolean				myPlacesOpened = false;
 	private boolean				firstLayout = false;
-	private boolean				desktopChangeInProgress;
-
-	private float				clickX;
-	private float				clickY;
-	private int					desktopToSet = 0;
 	
 	public Workspace(Context context) {
 		super(context);
@@ -79,7 +68,7 @@ public class Workspace extends ViewGroup
         for(int i = 0; i < NUM_DESKTOPS; i++)
         {
         	desktopView[i] = new DesktopView(home);
-            desktopView[i].setDragController(this);
+            desktopView[i].setDragController(myHome.getInstance().getScreen());
             desktopView[i].setDesktopNumber(i);
 
             desktopView[i].setOnClickListener(this);
@@ -91,13 +80,13 @@ public class Workspace extends ViewGroup
         firstLayout = true;
         
         allAppsGrid = new AppsGrid(home);
-        allAppsGrid.setDragController(this);
+        allAppsGrid.setDragController(myHome.getInstance().getScreen());
         allAppsGrid.setAdapter(new AppsAdapter(home, null));
         allAppsGrid.setOnItemClickListener(this);
         allAppsGrid.setOnItemLongClickListener(this);
 
         myPlacesGrid = new MyPlacesGrid(home);
-        myPlacesGrid.setDragController(this);
+        myPlacesGrid.setDragController(myHome.getInstance().getScreen());
         myPlacesGrid.setOnItemClickListener(this);
         myPlacesGrid.setOnItemLongClickListener(this);
 
@@ -108,7 +97,10 @@ public class Workspace extends ViewGroup
 	public void gotoDesktop(int num)
 	{
 		if(num < 0 || num >= NUM_DESKTOPS)
+		{
+			scrollTo(currentDesktop * getWidth(), 0);
 			return;
+		}
 		
 		currentDesktop = num;
 		
@@ -174,7 +166,7 @@ public class Workspace extends ViewGroup
 
 		openedFolder.setOnItemClickListener(this);
 		openedFolder.setOnItemLongClickListener(this);
-		openedFolder.setDragController(this);
+		openedFolder.setDragController(myHome.getInstance().getScreen());
     }
     
     public void closeFolder(final Folder f)
@@ -182,186 +174,16 @@ public class Workspace extends ViewGroup
     	((DesktopView)getCurrentDesktop()).removeView(f);
 		openedFolder = null;
     }
-    
-    @Override
-	public void onDragBegin(DragSource src, View view, Object info) {
-		closeAllAppsGrid();
-		closeMyPlaces();
-		
-		Vibrator vibrator = (Vibrator)home.getSystemService(Context.VIBRATOR_SERVICE);
-		vibrator.vibrate(50);
-		
-		dragInProgress = true;
-		
-		dragSource = src;
-		
-		dragView = view;
-		dragInfo = info;
-		
-		Point eventPoint = new Point();
-		int[] loc = new int[2];
-		dragView.getLocationInWindow(loc);
-		
-		eventPoint.x = loc[0];
-		eventPoint.y = loc[1];
-		
-		((DesktopView)getCurrentDesktop()).onIncomingDrag(dragView, dragInfo);
-		dragSource.onDrag(dragView, dragInfo);
-		((DesktopView)getCurrentDesktop()).onDragMovement(dragView, dragInfo, eventPoint);
-		
-		view.setVisibility(GONE);
-	}
-
-	@Override
-	public void onDragEnd() {
-		dragInProgress = false;
-		
-		dragView.setVisibility(VISIBLE);
-		
-		dragSource.onDropped(dragView, dragInfo);
-		
-		((DesktopView)getCurrentDesktop()).onDrop(dragSource, dragView, dragInfo);
-	}
 	
-	@Override
-	public void onDragMotionEvent(MotionEvent event)
-	{
-		onTouchEvent(event);
-	}
-	
-	private float distance(float f, float g, float h, float i)
-	{
-		return Math.abs((float)
-				Math.sqrt(
-						((f - g) * (f - g)) +
-						((h - i) * (h - i))
-						)
-					);
-	}
-    
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event)
-    {
-    	if(event.getKeyCode() == KeyEvent.KEYCODE_BACK)
-    	{
-    		closeAllOpen();
-    		if(openedFolder != null)
-    			closeFolder(openedFolder);
-    		
-    		return true;
-    	}
-    	
-    	return super.dispatchKeyEvent(event);
-    }
-	
-	@Override
-	public boolean dispatchTouchEvent(MotionEvent event)
-	{
-		if(event.getAction() == MotionEvent.ACTION_DOWN)
-		{
-			clickX = event.getX();
-			clickY = event.getY();
-		}
-		
-		if(event.getAction() == MotionEvent.ACTION_UP)
-		{
-			if(desktopChangeInProgress)
-			{
-				gotoDesktop(getCurrentDesktopNum() + desktopToSet);
-				
-				desktopChangeInProgress = false;
-				
-				return true;
-			}
-		}
-		
-		if(event.getAction() == MotionEvent.ACTION_MOVE && !dragInProgress && !isAnythingOpen())
-		{
-			if(distance(clickX, event.getX(),
-						clickY, event.getY()) > 10.0f && !desktopChangeInProgress)
-			{
-				cancelAllLongPresses();
-				desktopChangeInProgress = true;
-				Log.d("myHome", "Desktop Change!");
-			}
-			
-			if(desktopChangeInProgress)
-			{
-				performDesktopChange(clickX, clickY,
-									event.getX(), event.getY());
-				return true;
-			}
-		}
-		
-		if(dragInProgress)
-			onTouchEvent(event);
-		
-		//if(gestureDetector.onTouchEvent(event))
-		//	return true;
-			
-		return (dragInProgress || super.dispatchTouchEvent(event));
-	}
-	
-	private boolean isAnythingOpen() {
+	public boolean isAnythingOpen() {
 		return (appsGridOpened || openedFolder != null || myPlacesOpened);
 	}
 
-	private void cancelAllLongPresses() {
+	public void cancelAllLongPresses() {
 		this.cancelLongPress();
 		
 		for(int i = 0; i < getChildCount(); i++)
 			getChildAt(i).cancelLongPress();
-	}
-
-	private void performDesktopChange(float startX, float startY, float x, float y)
-	{
-		if(diamondLayout)
-		{
-			
-		}
-		else
-		{
-			float difference = startX - x;
-			
-			if(difference < 0)
-				scrollTo((int) ((getCurrentDesktopNum() * getWidth())+difference), 0);
-			else
-				scrollTo((int) ((getCurrentDesktopNum() * getWidth())-(difference*-1)), 0);
-			
-			if(Math.abs(difference) > getWidth()*0.6)
-			{
-				if(difference < 0)
-					desktopToSet = -1;
-				else
-					desktopToSet = 1;
-			}
-			else
-				desktopToSet = 0;
-		}
-	}
-	
-	public boolean onTouchEvent(MotionEvent event)
-	{
-		switch(event.getAction())
-		{
-			case MotionEvent.ACTION_MOVE:
-				if(dragInProgress) {
-					Point eventPoint = new Point();
-					eventPoint.x = (int) event.getX();
-					eventPoint.y = (int) event.getY();
-					
-					((DesktopView)getCurrentDesktop()).onDragMovement(dragView, dragInfo, eventPoint);
-				}
-				break;
-			
-			case MotionEvent.ACTION_UP:
-				if(dragInProgress) {
-					onDragEnd();
-				}
-				break;
-		}
-		
-		return true;
 	}
 
 	@Override
@@ -386,10 +208,11 @@ public class Workspace extends ViewGroup
 		if(parent instanceof DragSource)
 		{
 			if(parent.getParent() instanceof Folder)
-				onDragBegin((DragSource)parent.getParent(), view,
-							parent.getAdapter().getItem(position));
+				myHome.getInstance().getScreen().onDragBegin((DragSource)parent.getParent(),
+						view, parent.getAdapter().getItem(position));
 			else
-				onDragBegin((DragSource)parent, view, parent.getAdapter().getItem(position));
+				myHome.getInstance().getScreen().onDragBegin((DragSource)parent, view,
+						parent.getAdapter().getItem(position));
 		}
 			
 		return true;
@@ -445,7 +268,8 @@ public class Workspace extends ViewGroup
 				v.clearFocus();
 				v.setPressed(false);
 				
-				onDragBegin((DragSource) getCurrentDesktop(), v, item);
+				myHome.getInstance().getScreen().onDragBegin((DragSource) getCurrentDesktop(),
+															v, item);
 			}
 		}
 		else if(v instanceof DesktopView)
@@ -543,7 +367,7 @@ public class Workspace extends ViewGroup
 				    			
 				    			final AppWidgetProviderInfo info = AppWidgetManager.
 				    								getInstance(home).getAppWidgetInfo(widgetid);
-				    			final AppWidgetHostView view = myHome.getAppWidgetHost().
+				    			final MyHomeAppWidgetHostView view = (MyHomeAppWidgetHostView) myHome.getAppWidgetHost().
 				    									createView(home, widgetid, info);
 				    			view.setAppWidget(widgetid, info);
 				    			info.configure = null;
@@ -658,13 +482,5 @@ public class Workspace extends ViewGroup
 				pos += width;
 			}
 		}
-	}
-
-	public float getClickX() {
-		return clickX;
-	}
-
-	public float getClickY() {
-		return clickY;
 	}
 }
