@@ -39,6 +39,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	private OnLongClickListener onLongClickListener;
 	
 	private	int				desktopNumber = -1;
+	private boolean messageShown;
 	
 	public DesktopView(Context context) {
 		super(context);
@@ -281,15 +282,18 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		{
 			Point dest = calcDropCell(dragPosition);
 			
-			if(src instanceof MyPlacesGrid)
-				addDesktopFolder(true, dest, view, (ApplicationInfo)info);
-			else if((src instanceof AppsGrid) || (src instanceof Folder))
-				addDesktopShortcut(true, dest, view, (ApplicationInfo)info);
-			else
+			if(dest != null)
 			{
-				if(info instanceof DesktopItem)
+				if(src instanceof MyPlacesGrid)
+					addDesktopFolder(true, dest, view, (ApplicationInfo)info);
+				else if((src instanceof AppsGrid) || (src instanceof Folder))
+					addDesktopShortcut(true, dest, view, (ApplicationInfo)info);
+				else
 				{
-					moveDesktopItem((DesktopItem)info, dest);
+					if(info instanceof DesktopItem)
+					{
+						moveDesktopItem((DesktopItem)info, dest);
+					}
 				}
 			}
 		}
@@ -303,6 +307,9 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 		int pos[] = findNearestVacantArea(drop.x, drop.y,
 				   1, 1, vacantCells, null);
+		
+		if(pos == null)
+			return null;
 		
 		ret.x = pos[0];
 		ret.y = pos[1];
@@ -319,6 +326,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 		dragPosition = new Point();
 		estDropPosition = new Point();
+		messageShown = false;
 		
 		vacantCells = this.findAllVacantCells(null, null);
 	}
@@ -351,6 +359,41 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 				p = findNearestVacantArea(dragPosition.x, dragPosition.y,
 						1, 1, vacantCells, null);
 					
+			if(p == null)
+			{
+				estDropPosition = null;
+				
+				if(!messageShown)
+				{
+					final Toast t = Toast.makeText(context, context.getResources().
+							      getString(R.string.error_desktop_full), Toast.LENGTH_LONG);
+					t.show();
+					
+					//Hack if Toast refuses to cancel itself
+					Runnable cancel = new Runnable()
+					{
+						public void run() {
+							try {
+								Thread.sleep(3000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+							myHome.getInstance().runOnUiThread(new Runnable() {
+								public void run() {
+									t.cancel();
+								}
+							});
+						}
+					};
+					Thread thread = new Thread(cancel);
+						thread.start();
+						
+					messageShown = true;
+				}
+				
+				return;
+			}
+			
 			int[] pixel = new int[2];
 			this.cellToPoint(p[0], p[1], pixel);
 					

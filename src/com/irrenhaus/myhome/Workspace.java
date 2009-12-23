@@ -402,6 +402,9 @@ public class Workspace extends ViewGroup
 			public void run() {
 				((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
 				((MyPlacesAdapter)myPlacesGrid.getAdapter()).notifyDataSetChanged();
+				closeAllOpen();
+				if(openedFolder != null)
+					closeFolder(openedFolder);
 			}
 		});
 		loadWorkspaceDatabase();
