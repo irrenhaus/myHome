@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
@@ -13,8 +12,8 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.TextView;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
@@ -66,61 +65,16 @@ public class DesktopItem {
 		
 		if(view == null)
 		{
-			if(type == APPLICATION_SHORTCUT)
+			BubbleTextView v = (BubbleTextView) LayoutInflater.from(context).
+								inflate(R.layout.desktop_item_view, null);
+			
+			if(type == APPLICATION_SHORTCUT || type == USER_FOLDER)
 			{
-				TextView v = new TextView(context);
-				
 				v.setText(title);
 				
-				final Bitmap.Config c = icon.getOpacity() != PixelFormat.OPAQUE ?
-		                				Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
-				
-				int width = (int) context.getResources().getDimension(android.R.dimen.app_icon_size);
-		        int height = (int) context.getResources().getDimension(android.R.dimen.app_icon_size);
-
-		        Bitmap bmp = Bitmap.createBitmap(width, height, c);
-				Canvas can = new Canvas(bmp);
-				Rect bounds = new Rect();
-				bounds.set(icon.getBounds());
-				icon.setBounds(0, 0, width, height);
-				icon.draw(can);
-				icon.setBounds(bounds);
-				
 				v.setCompoundDrawablesWithIntrinsicBounds(null,
-														  new BitmapDrawable(bmp),
-														  null,
-														  null);
-
-				v.setSingleLine();
-
-				v.setGravity(Gravity.CENTER);
-				
-				v.setLayoutParams(layoutParams);
-				
-				view = v;
-			}
-			else if(type == USER_FOLDER)
-			{
-				TextView v = new TextView(context);
-				
-				v.setText(title);
-				
-				final Bitmap.Config c = icon.getOpacity() != PixelFormat.OPAQUE ?
-		                				Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
-				
-				int width = (int) context.getResources().getDimension(android.R.dimen.app_icon_size);
-		        int height = (int) context.getResources().getDimension(android.R.dimen.app_icon_size);
-
-		        Bitmap bmp = Bitmap.createBitmap(width, height, c);
-				Canvas can = new Canvas(bmp);
-				Rect bounds = new Rect();
-				bounds.set(icon.getBounds());
-				icon.setBounds(0, 0, width, height);
-				icon.draw(can);
-				icon.setBounds(bounds);
-				
-				v.setCompoundDrawablesWithIntrinsicBounds(null,
-														  new BitmapDrawable(bmp),
+														  Utilities.createIconThumbnail(icon,
+																  context),
 														  null,
 														  null);
 
@@ -133,6 +87,8 @@ public class DesktopItem {
 				view = v;
 			}
 		}
+		
+		view.setFocusable(true);
 		
 		view.setTag(this);
 		

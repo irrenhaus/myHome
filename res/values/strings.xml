@@ -15,4 +15,8 @@
 <string name="fatal_crash_title">Fatal Crash</string>
 <string name="dialog_title_uninstall">Uninstall</string>
 <string name="dialog_message_uninstall">Do you really want to uninstall this application?</string>
+<string name="dialog_title_rm_place">Remove MyPlace</string>
+<string name="dialog_message_rm_place">Do you really want to remove this MyPlace?</string>
+<string name="CrashReport_MailSubject">Crash of MyHome</string>
+<string name="CrashReport_MailBody">Error</string>
 </resources>

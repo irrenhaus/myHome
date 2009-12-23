@@ -15,7 +15,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.net.Uri;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -46,8 +45,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	private OnClickListener onClickListener;
 	private OnLongClickListener onLongClickListener;
 	
-	private Point			currentPointerPos = null;
-	
 	private	int				desktopNumber = -1;
 	
 	public DesktopView(Context context) {
@@ -61,15 +58,15 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		this.setFocusableInTouchMode(true);
 		
 		//Needed because of drawing the views for drag & drop
-		this.setBackgroundColor(Color.argb(1, 128, 128, 128));
+		this.setBackgroundColor(Color.argb(0, 128, 128, 128));
 	}
 	
 	@Override
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
-		
-		setCellHeight(getHeight() / NUM_COLUMNS_DESKTOPVIEW);
-		setCellWidth(getWidth() / NUM_COLUMNS_DESKTOPVIEW);
+
+		setCellWidth((getWidth()/4));
+		setCellHeight((getHeight()/4));
 		
 		setLongAxisCells(NUM_COLUMNS_DESKTOPVIEW);
 		setShortAxisCells(NUM_COLUMNS_DESKTOPVIEW);
@@ -96,21 +93,14 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			getChildAt(i).setOnLongClickListener(l);
 	}
 	
-	@Override
-	public boolean dispatchTouchEvent(MotionEvent event)
-	{
-		currentPointerPos = new Point((int)event.getX(), (int)event.getY());
-			
-		return super.dispatchTouchEvent(event);
-	}
-	
 	public void addAppWidget(AppWidgetHostView view, AppWidgetProviderInfo info, int id)
 	{
 		int span[] = this.rectToCell(info.minWidth, info.minHeight);
 		
 		vacantCells = this.findAllVacantCells(null, null);
 		
-		final Point p = currentPointerPos;
+		final Point p = new Point((int)myHome.getInstance().getWorkspace().getClickX(),
+								(int)myHome.getInstance().getWorkspace().getClickY());
 		
 		int cell[] = findNearestVacantArea(p.x, p.y, span[0], span[1], vacantCells, null);
 		
@@ -181,6 +171,18 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	{
 		if(create)
 		{
+			for(int i = 0; i < getChildCount(); i++)
+			{
+				if(getChildAt(i).getTag() instanceof DesktopItem)
+				{
+					DesktopItem item = (DesktopItem) getChildAt(i).getTag();
+					
+					if(item.getType() == DesktopItem.APPLICATION_SHORTCUT &&
+						item.getApplicationInfo().equals(info))
+						return;
+				}
+			}
+			
 			CellLayout.LayoutParams params = new CellLayout.LayoutParams(dest.x, dest.y, 1, 1);
 			DesktopItem item = new DesktopItem(context,
 											   DesktopItem.APPLICATION_SHORTCUT,
@@ -209,6 +211,18 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	{
 		if(create)
 		{
+			for(int i = 0; i < getChildCount(); i++)
+			{
+				if(getChildAt(i).getTag() instanceof DesktopItem)
+				{
+					DesktopItem item = (DesktopItem) getChildAt(i).getTag();
+					
+					if(item.getType() == DesktopItem.USER_FOLDER &&
+						item.getApplicationInfo().equals(info))
+						return;
+				}
+			}
+			
 			CellLayout.LayoutParams params = new CellLayout.LayoutParams(dest.x, dest.y, 1, 1);
 			DesktopItem item = new DesktopItem(context,
 											   DesktopItem.USER_FOLDER,
@@ -232,6 +246,20 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		{
 			DesktopItem item = (DesktopItem) view.getTag();
 			moveDesktopItem(item, dest);
+		}
+	}
+	
+	public void removeDesktopFolder(Folder f)
+	{
+		for(int i = 0; i < getChildCount(); i++)
+		{
+			if(getChildAt(i).getTag() instanceof DesktopItem)
+			{
+				DesktopItem child = (DesktopItem) getChildAt(i).getTag();
+				
+				if(child.getType() == DesktopItem.USER_FOLDER && child.getFolder() == f)
+					removeView(getChildAt(i));
+			}
 		}
 	}
 
@@ -310,8 +338,51 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		if(src instanceof AppsGrid)
 		{
 			AppsGrid grid = (AppsGrid)src;
+
+			final ApplicationInfo appInfo = (ApplicationInfo)info;
 			
-			if(grid.getParent() instanceof Folder)
+			if(grid instanceof MyPlacesGrid)
+			{
+				String title = context.getResources().getString(R.string.dialog_title_rm_place);
+				String msg = context.getResources().getString(R.string.dialog_message_rm_place);
+
+				String ok = context.getResources().getString(R.string.dialog_button_ok);
+				String cancel = context.getResources().getString(R.string.dialog_button_cancel);
+				
+				title += " '"+appInfo.name+"'";
+				
+				AlertDialog.Builder builder = new AlertDialog.Builder(context);
+				
+				builder.setTitle(title);
+				builder.setMessage(msg);
+				
+				builder.setPositiveButton(ok, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+						
+						Folder f = ((MyPlacesAdapter)myHome.getInstance().getWorkspace().
+								getMyPlacesGrid().getAdapter()).getFolder(appInfo.name);
+				
+						myHome.getInstance().storeRemovePlace(f);
+						
+						MyPlacesAdapter a = (MyPlacesAdapter) myHome.getInstance().getWorkspace().
+												getMyPlacesGrid().getAdapter();
+						a.reload();
+						a.notifyDataSetChanged();
+						
+						myHome.getInstance().getWorkspace().removeAllDesktopFolders(f);
+					}
+				});
+				
+				builder.setNegativeButton(cancel, new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				});
+				
+				builder.create().show();
+			}
+			else if(grid.getParent() instanceof Folder)
 			{
 				myHome.getInstance().storeRemoveShortcutFromPlace(
 										((ApplicationInfo)info).intent.toURI(),
@@ -328,8 +399,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 				String ok = context.getResources().getString(R.string.dialog_button_ok);
 				String cancel = context.getResources().getString(R.string.dialog_button_cancel);
-
-				final ApplicationInfo appInfo = (ApplicationInfo)info;
 				
 				title += " '"+appInfo.name+"'";
 				
@@ -458,9 +527,9 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	}
 	
 	@Override
-	protected void onDraw(Canvas canvas)
+	protected void dispatchDraw(Canvas canvas)
 	{
-		super.onDraw(canvas);
+		super.dispatchDraw(canvas);
 		
 		if((dragViewBitmap == null || dragViewAlphaBitmap == null) && dropView != null)
 		{

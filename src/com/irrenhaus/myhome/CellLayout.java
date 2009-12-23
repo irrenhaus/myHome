@@ -72,10 +72,10 @@ public class CellLayout extends ViewGroup {
         mCellWidth = 10;
         mCellHeight = 10;
         
-        mLongAxisStartPadding = 10;
-        mLongAxisEndPadding = 10;
-        mShortAxisStartPadding = 10;
-        mShortAxisEndPadding =  10;
+        mLongAxisStartPadding = 0;
+        mLongAxisEndPadding = 0;
+        mShortAxisStartPadding = 0;
+        mShortAxisEndPadding =  0;
         
         mShortAxisCells = 4;
         mLongAxisCells = 4;

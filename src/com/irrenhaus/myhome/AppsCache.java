@@ -132,54 +132,14 @@ public class AppsCache implements Runnable {
         	ApplicationInfo info = new ApplicationInfo();
         	
         	info.name = ""+resolve.loadLabel(pkgMgr);
-        	info.icon = resolve.loadIcon(pkgMgr);
         	Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.addCategory(Intent.CATEGORY_LAUNCHER);
             intent.setComponent(new ComponentName(resolve.activityInfo.applicationInfo.packageName,
             									  resolve.activityInfo.name));
         	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         	info.intent = intent;
-        		
-        	Drawable icon = info.icon;
 
-            if (!info.filtered) {
-                final Resources resources = context.getResources();
-                int width = (int) resources.getDimension(android.R.dimen.app_icon_size);
-                int height = (int) resources.getDimension(android.R.dimen.app_icon_size);
-                
-                final int iconWidth = icon.getIntrinsicWidth();
-                final int iconHeight = icon.getIntrinsicHeight();
-
-                if (icon instanceof PaintDrawable) {
-                    PaintDrawable painter = (PaintDrawable) icon;
-                    painter.setIntrinsicWidth(width);
-                    painter.setIntrinsicHeight(height);
-                }
-
-                if (width > 0 && height > 0 && (width < iconWidth || height < iconHeight)) {
-                    final float ratio = (float) iconWidth / iconHeight;
-
-                    if (iconWidth > iconHeight) {
-                        height = (int) (width / ratio);
-                    } else if (iconHeight > iconWidth) {
-                        width = (int) (height * ratio);
-                    }
-
-                    final Bitmap.Config c =
-                            icon.getOpacity() != PixelFormat.OPAQUE ?
-                                Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
-                    final Bitmap thumb = Bitmap.createBitmap(width, height, c);
-                    final Canvas canvas = new Canvas(thumb);
-                    canvas.setDrawFilter(new PaintFlagsDrawFilter(Paint.DITHER_FLAG, 0));
-                    Rect oldBounds = new Rect();
-                    oldBounds.set(icon.getBounds());
-                    icon.setBounds(0, 0, width, height);
-                    icon.draw(canvas);
-                    icon.setBounds(oldBounds);
-                    icon = info.icon = new BitmapDrawable(thumb);
-                    info.filtered = true;
-                }
-            }
+            info.icon = Utilities.createIconThumbnail(resolve.loadIcon(pkgMgr), context);
         	
         	applicationInfos.add(info);
         	
@@ -216,7 +176,9 @@ public class AppsCache implements Runnable {
 		public boolean equals(ApplicationInfo info)
 		{
 			return ((name.equals(info.name)) &&
-					(intent.toURI().equals(info.intent.toURI())) &&
+					((intent != null && info.intent != null &&
+							(intent.toURI().equals(info.intent.toURI()))) ||
+					  (intent == null && info.intent == null)) &&
 					(isFolder == info.isFolder));
 		}
 	}

@@ -15,16 +15,18 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
@@ -63,7 +65,7 @@ public class myHome extends Activity {
         
         setContentView(R.layout.main);
         
-        Thread.setDefaultUncaughtExceptionHandler(new CrashHandler(this));
+        CrashHandler.getInstance().CheckErrorAndSendMail(this);
         
         AppsCache.getInstance().setContext(getApplicationContext());
         
@@ -72,7 +74,7 @@ public class myHome extends Activity {
         workspace = (Workspace)findViewById(R.id.workspace);
         workspace.setHome(this);
         
-        Button appsGridButton = (Button)findViewById(R.id.openAllAppsGridButton);
+        ImageView appsGridButton = (ImageView)findViewById(R.id.openAllAppsGridButton);
         appsGridButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if(workspace.isAppsGridOpened())
@@ -82,7 +84,7 @@ public class myHome extends Activity {
 			}
         });
         
-        Button myPlacesButton = (Button)findViewById(R.id.openMyPlacesButton);
+        ImageView myPlacesButton = (ImageView)findViewById(R.id.openMyPlacesButton);
         myPlacesButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if(workspace.isMyPlacesOpened())
@@ -105,6 +107,8 @@ public class myHome extends Activity {
 			AppsCache.getInstance().start();
 		else
 			AppsCache.getInstance().sendLoadingDone();
+		
+		AppWidgetManager.getInstance(myHome.this);
     }
     
     public static myHome getInstance()
@@ -218,40 +222,44 @@ public class myHome extends Activity {
     }
     
     @Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data)
+	protected void onActivityResult(final int requestCode, final int resultCode, final Intent data)
 	{
-    	if(requestCode == PICK_WIDGET)
-		{
-			int widgetid = data.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID);
-			
-			if(resultCode != Activity.RESULT_OK)
-				myHome.getAppWidgetHost().deleteAppWidgetId(widgetid);
-			else
-			{
-				AppWidgetProviderInfo appWidget = AppWidgetManager.getInstance(this).getAppWidgetInfo(widgetid);
-				
-				AppWidgetHostView view = myHome.getAppWidgetHost().createView(this, widgetid,
-											appWidget);
-				view.setAppWidget(widgetid, appWidget);
-				
-				((DesktopView)workspace.getChildAt(0)).addAppWidget(view, appWidget, widgetid);
-				
-				getAppWidgetHost().startListening();
+    	runOnUiThread(new Runnable() {
+			public void run() {
+				if(requestCode == PICK_WIDGET)
+				{
+					int widgetid = data.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID);
+					
+					if(resultCode != Activity.RESULT_OK)
+						myHome.getAppWidgetHost().deleteAppWidgetId(widgetid);
+					else
+					{
+						AppWidgetProviderInfo appWidget = AppWidgetManager.getInstance(myHome.this).getAppWidgetInfo(widgetid);
+						
+						AppWidgetHostView view = myHome.getAppWidgetHost().createView(myHome.this, widgetid,
+													appWidget);
+						view.setAppWidget(widgetid, appWidget);
+						
+						workspace.getCurrentDesktop().addAppWidget(view, appWidget, widgetid);
+						
+						getAppWidgetHost().startListening();
+					}
+				}
+		    	else if(requestCode == ADD_WIDGET)
+		    	{
+		    		int id = data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
+		    		if(resultCode == Activity.RESULT_OK && id != -1)
+		    		{
+		    			workspace.getCurrentDesktop().completeAddWidget(hostViewTmp, providerInfoTmp,
+		    						id, paramsTmp);
+		    		}
+		    		else
+		    		{
+		    			getAppWidgetHost().deleteAppWidgetId(id);
+		    		}
+		    	}
 			}
-		}
-    	else if(requestCode == ADD_WIDGET)
-    	{
-    		int id = data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
-    		if(resultCode == Activity.RESULT_OK && id != -1)
-    		{
-    			workspace.getCurrentDesktop().completeAddWidget(hostViewTmp, providerInfoTmp,
-    						id, paramsTmp);
-    		}
-    		else
-    		{
-    			getAppWidgetHost().deleteAppWidgetId(id);
-    		}
-    	}
+    	});
 	}
     
     private boolean itemExistsInDatabase(ContentValues values)
@@ -391,6 +399,12 @@ public class myHome extends Activity {
     	
 		db.delete(MyHomeDB.FOLDER_DEFINITION_TABLE, Folder.TITLE+"=?",
 				new String[] {folder.getTitle()});
+    	
+		db.delete(MyHomeDB.FOLDER_TABLE, Folder.TITLE+"=?",
+				new String[] {folder.getTitle()});
+    	
+		db.delete(MyHomeDB.WORKSPACE_TABLE, DesktopItem.INTENT+"=?",
+				new String[] {folder.getTitle()});
     }
     
     public void storeAddShortcutToPlace(String intent, Folder folder)
@@ -441,10 +455,5 @@ public class myHome extends Activity {
 	
 	public Workspace getWorkspace() {
 		return workspace;
-	}
-	
-	public void desktopChanged(boolean diamond, int num)
-	{
-		screen.desktopChanged(diamond, num);
 	}
 }

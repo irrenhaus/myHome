@@ -4,4 +4,35 @@
 		<item name="android:windowBackground">@null</item>
 		<item name="android:windowNoTitle">true</item>
 	</style>
+	
+	<style name="DesktopIcon">
+        <item name="android:textSize">13dip</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">marquee</item>
+        <item name="android:shadowColor">#FF000000</item>
+        <item name="android:shadowRadius">2.0</item>
+        <item name="android:textColor">#FFF</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:layout_width">fill_parent</item>
+        <item name="android:layout_height">fill_parent</item>
+        <item name="android:background">@drawable/desktop_icon_bg</item>
+        <item name="android:paddingLeft">5dip</item>
+        <item name="android:paddingRight">5dip</item>
+    </style>
+
+    <style name="DesktopIcon.Portrait">
+        <item name="android:drawablePadding">5dip</item>
+        <item name="android:paddingTop">4dip</item>
+        <item name="android:layout_marginLeft">3dip</item>
+        <item name="android:layout_marginRight">3dip</item>
+        <item name="android:layout_marginTop">13dip</item>
+        <item name="android:layout_marginBottom">8dip</item>
+    </style>
+
+    <style name="DesktopIcon.Landscape">
+        <item name="android:drawablePadding">3dip</item>
+        <item name="android:paddingTop">2dip</item>
+        <item name="android:layout_marginLeft">10dip</item>
+        <item name="android:layout_marginRight">10dip</item>
+    </style>
 </resources>

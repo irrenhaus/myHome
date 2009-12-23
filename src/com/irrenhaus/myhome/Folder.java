@@ -47,7 +47,11 @@ public class Folder extends LinearLayout implements DragSource {
 	{
 		this.setOrientation(LinearLayout.VERTICAL);
 		
-		LayoutParams p = new LayoutParams(LayoutParams.FILL_PARENT, 24);
+		TextView text = new TextView(context);
+		
+		int height = text.getLineHeight();
+		
+		LayoutParams p = new LayoutParams(LayoutParams.FILL_PARENT, height+16);
 		
 		titleBar = new LinearLayout(context);
 		titleBar.setOrientation(LinearLayout.HORIZONTAL);
@@ -55,7 +59,6 @@ public class Folder extends LinearLayout implements DragSource {
 		
 		LayoutParams pTitle = new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
 		
-		TextView text = new TextView(context);
 		text.setText(title);
 		text.setLayoutParams(pTitle);
 		text.setBackgroundResource(R.drawable.folder_title_background);
