@@ -291,6 +291,8 @@ public class Screen extends LinearLayout implements DragController {
 					eventPoint.y = (int) event.getY() - (int)dragModY;
 					
 					workspace.getCurrentDesktop().onDragMovement(dragView, dragInfo, eventPoint);
+					
+					invalidate();
 				}
 				
 				lastMovementEvent = event;

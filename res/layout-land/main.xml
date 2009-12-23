@@ -17,14 +17,16 @@
 		android:layout_width="54dip" android:layout_weight="0">
 		<LinearLayout android:id="@+id/sideBar"
 			android:orientation="vertical" android:layout_height="fill_parent"
-			android:layout_width="fill_parent" android:gravity="right"
+			android:layout_width="fill_parent" android:gravity="right|center_vertical"
 			android:layout_gravity="center_vertical">
 			<ImageView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:id="@+id/openAllAppsGridButton"
-				android:src="@drawable/all_apps_button_land"/>
+				android:src="@drawable/all_apps_button_land"
+				android:minWidth="50dip" android:minHeight="70dip"/>
 			<ImageView android:layout_width="wrap_content"
 				android:layout_height="wrap_content" android:id="@+id/openMyPlacesButton"
-				android:src="@drawable/all_apps_button_land"/>
+				android:src="@drawable/my_places_button_land"
+				android:minWidth="50dip" android:minHeight="70dip"/>
 
 		</LinearLayout>
 
