@@ -280,14 +280,31 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		}
 		else
 		{
-			Point dest = calcDropCell(dragPosition);
+			Point dest = null;
+			if((src instanceof AppsGrid) || (src instanceof Folder))
+			{
+				dest = calcDropCell(dragPosition, 1, 1);
+			}
+			else
+			{
+				if(info instanceof DesktopItem)
+				{
+					DesktopItem item = (DesktopItem)info;
+					dest = calcDropCell(dragPosition, item.getLayoutParams().cellHSpan,
+							item.getLayoutParams().cellVSpan);
+				}
+			}
 			
 			if(dest != null)
 			{
 				if(src instanceof MyPlacesGrid)
+				{
 					addDesktopFolder(true, dest, view, (ApplicationInfo)info);
+				}
 				else if((src instanceof AppsGrid) || (src instanceof Folder))
+				{
 					addDesktopShortcut(true, dest, view, (ApplicationInfo)info);
+				}
 				else
 				{
 					if(info instanceof DesktopItem)
@@ -301,12 +318,12 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		invalidate();
 	}
 	
-	private Point calcDropCell(Point drop)
+	private Point calcDropCell(Point drop, int w, int h)
 	{
 		Point ret = new Point();
 
 		int pos[] = findNearestVacantArea(drop.x, drop.y,
-				   1, 1, vacantCells, null);
+				   w, h, vacantCells, null);
 		
 		if(pos == null)
 			return null;
