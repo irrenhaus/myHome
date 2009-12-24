@@ -2,7 +2,6 @@ package com.irrenhaus.myhome;
 
 import java.net.URISyntaxException;
 
-import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
@@ -10,12 +9,8 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
-import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.GestureDetector;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
@@ -50,6 +45,10 @@ public class Workspace extends ViewGroup
 	private	Folder				openedFolder;
 	private boolean				myPlacesOpened = false;
 	private boolean				firstLayout = false;
+	
+	private Animation			fadeInAnimation;
+	private Animation			fadeOutAnimation;
+	private Animation			desktopItemClickAnimation;
 	
 	public Workspace(Context context) {
 		super(context);
@@ -92,6 +91,10 @@ public class Workspace extends ViewGroup
 
         myPlacesAdapter = new MyPlacesAdapter(home);
         myPlacesGrid.setAdapter(myPlacesAdapter);
+
+        fadeInAnimation = AnimationUtils.loadAnimation(home, R.anim.fadein);
+        fadeOutAnimation = AnimationUtils.loadAnimation(home, R.anim.fadeout);
+        desktopItemClickAnimation = AnimationUtils.loadAnimation(home, R.anim.desktop_item_click);
 	}
 	
 	public void gotoDesktop(int num)
@@ -114,13 +117,21 @@ public class Workspace extends ViewGroup
 		
 		currentDesktop = num;
 	}
-	
+
 	public void closeAllOpen()
 	{
-		closeMyPlaces();
-		closeAllAppsGrid();
-		//if(openedFolder != null)
-		//	closeFolder(openedFolder);
+		if(myPlacesOpened)
+			closeMyPlaces(null);
+		if(isAppsGridOpened())
+			closeAllAppsGrid(null);
+	}
+	
+	public void closeAllOpenFor(Runnable run)
+	{
+		if(myPlacesOpened)
+			closeMyPlaces(run);
+		if(isAppsGridOpened())
+			closeAllAppsGrid(run);
 	}
 	
 	public void openAllAppsGrid()
@@ -129,12 +140,20 @@ public class Workspace extends ViewGroup
     	CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
     	((DesktopView)getCurrentDesktop()).addView(allAppsGrid, -1, lp);
     	appsGridOpened = true;
+    	allAppsGrid.startAnimation(fadeInAnimation);
     }
     
-    public void closeAllAppsGrid()
+    public void closeAllAppsGrid(final Runnable run)
     {
-    	((DesktopView)getCurrentDesktop()).removeView(allAppsGrid);
-    	appsGridOpened = false;
+    	allAppsGrid.setDoOnAnimationEnd(new Runnable() {
+			public void run() {
+		    	((DesktopView)getCurrentDesktop()).removeView(allAppsGrid);
+		    	appsGridOpened = false;
+				if(run != null)
+					run.run();
+			}
+		});
+    	allAppsGrid.startAnimation(fadeOutAnimation);
     }
 
 	public void openMyPlaces() {
@@ -142,11 +161,19 @@ public class Workspace extends ViewGroup
 		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
     	((DesktopView)getCurrentDesktop()).addView(myPlacesGrid, -1, lp);
 		myPlacesOpened = true;
+		myPlacesGrid.startAnimation(fadeInAnimation);
 	}
 
-	public void closeMyPlaces() {
-    	((DesktopView)getCurrentDesktop()).removeView(myPlacesGrid);
-		myPlacesOpened = false;
+	public void closeMyPlaces(final Runnable run) {
+		myPlacesGrid.setDoOnAnimationEnd(new Runnable() {
+			public void run() {
+		    	((DesktopView)getCurrentDesktop()).removeView(myPlacesGrid);
+				myPlacesOpened = false;
+				if(run != null)
+					run.run();
+			}
+		});
+		myPlacesGrid.startAnimation(fadeOutAnimation);
 	}
 
 	public boolean isMyPlacesOpened() {
@@ -159,14 +186,65 @@ public class Workspace extends ViewGroup
 		
 		if(openedFolder != null)
 			closeFolder(openedFolder);
+		
+		f.setNumColumns(AppsGrid.NUM_COLUMNS_APPSVIEW);
     	
 		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
 		((DesktopView)getCurrentDesktop()).addView(f, -1, lp);
 		openedFolder = f;
+		
+		f.startAnimation(fadeInAnimation);
 
 		openedFolder.setOnItemClickListener(this);
 		openedFolder.setOnItemLongClickListener(this);
 		openedFolder.setDragController(myHome.getInstance().getScreen());
+    }
+    
+    public void openFolderInScreen(final Folder f, DesktopItem caller)
+    {
+		closeAllOpen();
+		
+		if(openedFolder != null)
+		{
+			if(openedFolder == f)
+			{
+				closeFolderAnim(openedFolder);
+				return;
+			}
+			else
+				closeFolder(openedFolder);
+		}
+    	
+		int posX = 0;
+		int posY = 0;
+
+		int callerX = caller.getLayoutParams().cellX;
+		int callerY = caller.getLayoutParams().cellY;
+		
+		if(callerX < 2) //left position
+			posX = callerX+1;
+		if(callerX > 2) //right position
+			posX = 0 + Math.abs(2 - callerX);
+		
+		if(callerY == 3)
+			posY = 1;
+		
+		f.setNumColumns(2);
+		
+		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(posX, posY, 2, 3);
+		((DesktopView)getCurrentDesktop()).addView(f, -1, lp);
+		openedFolder = f;
+		
+		f.startAnimation(fadeInAnimation);
+
+		openedFolder.setOnItemClickListener(this);
+		openedFolder.setOnItemLongClickListener(this);
+		openedFolder.setDragController(myHome.getInstance().getScreen());
+    }
+    
+    public void closeFolderAnim(final Folder f)
+    {
+		f.startAnimation(fadeOutAnimation);
     }
     
     public void closeFolder(final Folder f)
@@ -218,19 +296,38 @@ public class Workspace extends ViewGroup
 		return true;
 	}
 	
-	public void onItemClick(AdapterView<?> parent, View view, int position,
+	public void onItemClick(final AdapterView<?> parent, View view, final int position,
 				long id) {
 		
 		if(parent instanceof MyPlacesGrid)
 		{
-			Folder f = ((MyPlacesAdapter)parent.getAdapter()).getFolder(position);
-			closeAllOpen();
-			openFolder(f);
+			closeAllOpenFor(new Runnable() {
+				public void run() {
+					Folder f = ((MyPlacesAdapter)parent.getAdapter()).getFolder(position);
+					openFolder(f);
+				}
+			});
 		}
 		else if(parent instanceof AppsGrid)
 		{
-			closeAllOpen();
-			home.startActivity(((ApplicationInfo)parent.getAdapter().getItem(position)).intent);
+			Log.d("myHome", "AppsGrid");
+			((ShortcutTextView)view).setDoOnAnimationEnd(new Runnable() {
+				public void run() {
+					Runnable run = new Runnable() {
+						public void run() {
+							home.startActivity(((ApplicationInfo)parent.getAdapter().getItem(position)).intent);
+						}
+					};
+					if(parent.getParent() instanceof Folder)
+					{
+						((Folder)parent.getParent()).setDoOnAnimationEnd(run);
+						closeFolder(((Folder)parent.getParent()));
+					}
+					else
+						closeAllOpenFor(run);
+				}
+			});
+			view.startAnimation(desktopItemClickAnimation);
 		}
 	}
 
@@ -239,18 +336,21 @@ public class Workspace extends ViewGroup
 		
 		if((tag instanceof DesktopItem))
 		{
-			Log.d("myHome", "OnClickDesktopItem");
 			final DesktopItem item = (DesktopItem) tag;
 			if(item.getType() == DesktopItem.APPLICATION_SHORTCUT)
 			{
-				closeAllAppsGrid();
-				home.startActivity(item.getLaunchIntent());
+				((BubbleTextView)v).setDoOnAnimationEnd(new Runnable() {
+					public void run() {
+						home.startActivity(item.getLaunchIntent());
+					}
+				});
+				v.startAnimation(desktopItemClickAnimation);
 			}
 			else if(item.getType() == DesktopItem.USER_FOLDER)
 			{
-				Log.d("myHome", "OnClickFolder");
-				closeAllOpen();
-				openFolder(item.getFolder());
+				Animation anim = AnimationUtils.loadAnimation(home, R.anim.desktop_item_click);
+				v.startAnimation(anim);
+				openFolderInScreen(item.getFolder(), item);
 			}
 		}
 	}
@@ -404,7 +504,7 @@ public class Workspace extends ViewGroup
 				((MyPlacesAdapter)myPlacesGrid.getAdapter()).notifyDataSetChanged();
 				closeAllOpen();
 				if(openedFolder != null)
-					closeFolder(openedFolder);
+					closeFolderAnim(openedFolder);
 			}
 		});
 		loadWorkspaceDatabase();

@@ -76,7 +76,7 @@ public class myHome extends Activity {
         appsGridButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if(workspace.isAppsGridOpened())
-					workspace.closeAllAppsGrid();
+					workspace.closeAllAppsGrid(null);
 				else
 					workspace.openAllAppsGrid();
 			}
@@ -86,7 +86,7 @@ public class myHome extends Activity {
         myPlacesButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if(workspace.isMyPlacesOpened())
-					workspace.closeMyPlaces();
+					workspace.closeMyPlaces(null);
 				else
 					workspace.openMyPlaces();
 			}
@@ -107,6 +107,14 @@ public class myHome extends Activity {
 			AppsCache.getInstance().sendLoadingDone();
 		
 		AppWidgetManager.getInstance(myHome.this);
+    }
+    
+    @Override
+    public void onStop()
+    {
+    	super.onStop();
+
+        myHome.getAppWidgetHost().stopListening();
     }
     
     public static myHome getInstance()
@@ -209,7 +217,7 @@ public class myHome extends Activity {
 		super.onResume();
     	
 		openDatabase();
-    	Log.d("myHome", "onResume. DB opened: "+db.isOpen());
+        myHome.getAppWidgetHost().startListening();
 	}
 	
     public void startWidgetPicker()
@@ -246,8 +254,6 @@ public class myHome extends Activity {
 						view.setAppWidget(widgetid, appWidget);
 						
 						workspace.getCurrentDesktop().addAppWidget(view, appWidget, widgetid);
-						
-						getAppWidgetHost().startListening();
 					}
 				}
 		    	else if(requestCode == ADD_WIDGET)

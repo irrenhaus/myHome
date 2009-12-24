@@ -3,7 +3,10 @@ package com.irrenhaus.myhome;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,6 +28,9 @@ public class Folder extends LinearLayout implements DragSource {
 	private	String				title = null;
 	
 	private DragController		dragCtrl;
+	
+	private boolean				opened = false;
+	private Runnable doOnAnimationEnd;
 
 	public Folder(Context context, String title) {
 		super(context);
@@ -67,7 +73,7 @@ public class Folder extends LinearLayout implements DragSource {
 		
 		text.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				myHome.getInstance().getWorkspace().closeFolder(Folder.this);
+				myHome.getInstance().getWorkspace().closeFolderAnim(Folder.this);
 			}
 		});
 		
@@ -86,15 +92,36 @@ public class Folder extends LinearLayout implements DragSource {
 		grid.setBackgroundDrawable(null);
 		
 		this.addView(grid);
-		this.setBackgroundResource(R.drawable.cell_bg);
+		this.setBackgroundResource(R.drawable.folder_bg);
 		
 		adapter.reload();
 		adapter.notifyDataSetChanged();
 	}
 	
+	public void setNumColumns(int num)
+	{
+		grid.setNumColumns(num);
+	}
+	
+	@Override
+	protected void onAnimationEnd()
+	{
+		if(opened)
+			close();
+		else
+			opened = true;
+		
+		if(doOnAnimationEnd != null)
+		{
+			doOnAnimationEnd.run();
+			doOnAnimationEnd = null;
+		}
+	}
+	
 	public void close()
 	{
 		myHome.getInstance().getWorkspace().closeFolder(this);
+		opened = false;
 	}
 
 	public String getTitle() {
@@ -137,5 +164,13 @@ public class Folder extends LinearLayout implements DragSource {
 	public void setOnItemLongClickListener(OnItemLongClickListener l)
 	{
 		grid.setOnItemLongClickListener(l);
+	}
+
+	public Runnable getDoOnAnimationEnd() {
+		return doOnAnimationEnd;
+	}
+
+	public void setDoOnAnimationEnd(Runnable doOnAnimationEnd) {
+		this.doOnAnimationEnd = doOnAnimationEnd;
 	}
 }

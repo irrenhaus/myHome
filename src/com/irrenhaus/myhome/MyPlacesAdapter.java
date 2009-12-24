@@ -96,18 +96,18 @@ public class MyPlacesAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		if(convertView == null || !(convertView instanceof TextView))
-			convertView = new TextView(context);
+		if(convertView == null || !(convertView instanceof ShortcutTextView))
+			convertView = new ShortcutTextView(context);
 		
 		final ApplicationInfo info = places.get(position);
 		
-		((TextView)convertView).setText(info.name);
-		((TextView)convertView).setCompoundDrawablesWithIntrinsicBounds(null,
+		((ShortcutTextView)convertView).setText(info.name);
+		((ShortcutTextView)convertView).setCompoundDrawablesWithIntrinsicBounds(null,
 																		info.icon,
 																		null,
 																		null);
-		((TextView)convertView).setLines(2);
-		((TextView)convertView).setGravity(Gravity.CENTER);
+		((ShortcutTextView)convertView).setLines(2);
+		((ShortcutTextView)convertView).setGravity(Gravity.CENTER);
 		
 		return convertView;
 	}

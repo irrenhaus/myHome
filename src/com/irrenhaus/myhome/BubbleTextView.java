@@ -46,6 +46,8 @@ public class BubbleTextView extends TextView {
     private float mCornerRadius;
     private float mPaddingH;
     private float mPaddingV;
+    
+    private Runnable	doOnAnimationEnd = null;
 
     public BubbleTextView(Context context) {
         super(context);
@@ -66,7 +68,8 @@ public class BubbleTextView extends TextView {
         setFocusable(true);
         mBackground = getBackground();
         setBackgroundDrawable(null);
-        mBackground.setCallback(this);
+        if(mBackground != null)
+        	mBackground.setCallback(this);
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mPaint.setColor(Color.argb(192, 32, 32, 32));
@@ -76,6 +79,16 @@ public class BubbleTextView extends TextView {
         mPaddingH = PADDING_H * scale;
         //noinspection PointlessArithmeticExpression
         mPaddingV = PADDING_V * scale;
+    }
+    
+    @Override
+    protected void onAnimationEnd()
+    {
+    	if(doOnAnimationEnd != null)
+    	{
+    		doOnAnimationEnd.run();
+    		doOnAnimationEnd = null;
+    	}
     }
 
     @Override
@@ -135,4 +148,12 @@ public class BubbleTextView extends TextView {
 
         super.draw(canvas);
     }
+
+	public Runnable getDoOnAnimationEnd() {
+		return doOnAnimationEnd;
+	}
+
+	public void setDoOnAnimationEnd(Runnable doOnAnimationEnd) {
+		this.doOnAnimationEnd = doOnAnimationEnd;
+	}
 }

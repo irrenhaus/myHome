@@ -22,6 +22,8 @@ public class AppsGrid extends GridView implements DragSource {
 	private android.widget.AdapterView.OnItemClickListener onClickListener;
 
 	private android.widget.AdapterView.OnItemLongClickListener onLongClickListener;
+
+	private Runnable doOnAnimationEnd;
 	
 	public AppsGrid(final Context context) {
 		super(context);
@@ -31,8 +33,18 @@ public class AppsGrid extends GridView implements DragSource {
 		this.setVerticalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
 		this.setHorizontalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
 		this.setBackgroundColor(Color.argb(192, 64, 64, 64));
-		this.setBackgroundResource(R.drawable.cell_bg);
+		this.setBackgroundResource(R.drawable.tray_bg);
 	}
+
+    @Override
+    protected void onAnimationEnd()
+    {
+    	if(doOnAnimationEnd != null)
+    	{
+    		doOnAnimationEnd.run();
+    		doOnAnimationEnd = null;
+    	}
+    }
 
 	@Override
 	public void onDrag(View view, Object info) {
@@ -60,5 +72,13 @@ public class AppsGrid extends GridView implements DragSource {
 		super.setOnItemLongClickListener(l);
 		
 		onLongClickListener = l;
+	}
+
+	public Runnable getDoOnAnimationEnd() {
+		return doOnAnimationEnd;
+	}
+
+	public void setDoOnAnimationEnd(Runnable doOnAnimationEnd) {
+		this.doOnAnimationEnd = doOnAnimationEnd;
 	}
 }

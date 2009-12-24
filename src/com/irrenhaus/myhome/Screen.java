@@ -90,8 +90,12 @@ public class Screen extends LinearLayout implements DragController {
     	
     	super.dispatchDraw(canvas);
     	
-    	if(dragInProgress && dragViewBitmap == null && dragView != null)
+    	if((dragInProgress && dragViewBitmap == null && dragView != null) ||
+    		(dragInProgress && dragView != null && dragViewBitmap.isRecycled()))
 		{
+    		if(dragViewBitmap != null && dragViewBitmap.isRecycled())
+    			dragView.invalidate();
+    		
 			dragViewBitmap = dragView.getDrawingCache();
 			dragViewAlphaPaint = new Paint();
 			dragViewAlphaPaint.setARGB(128, 66, 66, 66);
@@ -120,7 +124,7 @@ public class Screen extends LinearLayout implements DragController {
     	{
     		workspace.closeAllOpen();
     		if(workspace.getOpenedFolder() != null)
-    			workspace.closeFolder(workspace.getOpenedFolder());
+    			workspace.closeFolderAnim(workspace.getOpenedFolder());
     		
     		return true;
     	}
@@ -224,8 +228,7 @@ public class Screen extends LinearLayout implements DragController {
     
     @Override
 	public void onDragBegin(DragSource src, View view, Object info) {
-		workspace.closeAllAppsGrid();
-		workspace.closeMyPlaces();
+		workspace.closeAllOpen();
 		
 		Vibrator vibrator = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
 		vibrator.vibrate(50);

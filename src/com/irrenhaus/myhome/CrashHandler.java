@@ -19,6 +19,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Environment;
 import android.os.StatFs;
+import android.widget.Toast;
 
 // (C) by http://stackoverflow.com/questions/601503/how-do-i-obtain-crash-data-from-my-android-application
 
@@ -251,6 +252,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 	public void CheckErrorAndSendMail(Context _context) {
 		try {
 			if (bIsThereAnyErrorFile()) {
+				Toast.makeText(_context, R.string.collecting_error_trace, Toast.LENGTH_SHORT).show();
 				String WholeErrorText = "";
 				String[] ErrorFileList = GetErrorFileList();
 				int curIndex = 0;

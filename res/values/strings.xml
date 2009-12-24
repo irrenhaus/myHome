@@ -20,4 +20,5 @@
 <string name="CrashReport_MailSubject">Crash of MyHome</string>
 <string name="CrashReport_MailBody">Error</string>
 <string name="error_desktop_full">This desktop is already full!</string>
+<string name="collecting_error_trace">Collecting error trace. Please be patient.</string>
 </resources>
