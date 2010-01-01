@@ -36,21 +36,23 @@ public class Screen extends LinearLayout implements DragController {
 
 	private boolean				desktopChangeInProgress;
 
-	private float				clickX;
-	private float				clickY;
+	private int					clickX;
+	private int					clickY;
 	private int					desktopToSet = 0;
 	
 	private Workspace			workspace;
 
 	private MotionEvent 		lastMovementEvent;
 
-	private float dragModX;
+	private int					dragModX;
 
-	private float dragModY;
+	private int					dragModY;
 
-	private float lastMovementEventX;
+	private int					lastMovementEventX;
 
-	private float lastMovementEventY;
+	private int					lastMovementEventY;
+
+	private Paint				defaultPaint = new Paint();
 	
 	public Screen(Context context) {
 		super(context);
@@ -75,6 +77,9 @@ public class Screen extends LinearLayout implements DragController {
 	public void init()
 	{
 		workspace = myHome.getInstance().getWorkspace();
+		
+		dragViewAlphaPaint = new Paint();
+		dragViewAlphaPaint.setARGB(128, 66, 66, 66);
 	}
 	
 	@Override
@@ -85,7 +90,7 @@ public class Screen extends LinearLayout implements DragController {
     	
     	if(bmp != null)
     	{
-    		canvas.drawBitmap(bmp, 0, 0, new Paint());
+    		canvas.drawBitmap(bmp, 0, 0, defaultPaint);
     	}
     	
     	super.dispatchDraw(canvas);
@@ -97,12 +102,10 @@ public class Screen extends LinearLayout implements DragController {
     			dragView.invalidate();
     		
 			dragViewBitmap = dragView.getDrawingCache();
-			dragViewAlphaPaint = new Paint();
-			dragViewAlphaPaint.setARGB(128, 66, 66, 66);
 		}
 		
-		float toX = lastMovementEventX - dragModX;
-		float toY = lastMovementEventY - dragModY;
+		int toX = lastMovementEventX - dragModX;
+		int toY = lastMovementEventY - dragModY;
 		
 		if(dragInProgress && dragViewBitmap != null)
 		{
@@ -124,7 +127,7 @@ public class Screen extends LinearLayout implements DragController {
     	{
     		workspace.closeAllOpen();
     		if(workspace.getOpenedFolder() != null)
-    			workspace.closeFolderAnim(workspace.getOpenedFolder());
+    			workspace.closeFolder();
     		
     		return true;
     	}
@@ -138,14 +141,12 @@ public class Screen extends LinearLayout implements DragController {
 		onTouchEvent(event);
 	}
 	
-	private float distance(float f, float g, float h, float i)
+	private int abs(int num)
 	{
-		return Math.abs((float)
-				Math.sqrt(
-						((f - g) * (f - g)) +
-						((h - i) * (h - i))
-						)
-					);
+		if(num < 0)
+			return num * -1;
+		
+		return num;
 	}
 	
 	@Override
@@ -153,8 +154,8 @@ public class Screen extends LinearLayout implements DragController {
 	{
 		if(event.getAction() == MotionEvent.ACTION_DOWN)
 		{
-			clickX = event.getX();
-			clickY = event.getY();
+			clickX = (int)event.getX();
+			clickY = (int)event.getY();
 
 			lastMovementEventX = clickX;
 			lastMovementEventY = clickY;
@@ -175,8 +176,9 @@ public class Screen extends LinearLayout implements DragController {
 		if(event.getAction() == MotionEvent.ACTION_MOVE && !dragInProgress &&
 				!workspace.isAnythingOpen())
 		{
-			if(distance(clickX, event.getX(),
-						clickY, event.getY()) > 10.0f && !desktopChangeInProgress)
+			if((abs(clickX - (int)event.getX()) > 10 ||
+					abs(clickY - (int)event.getY()) > 10) &&
+					!desktopChangeInProgress)
 			{
 				workspace.cancelAllLongPresses();
 				desktopChangeInProgress = true;
@@ -185,7 +187,7 @@ public class Screen extends LinearLayout implements DragController {
 			if(desktopChangeInProgress)
 			{
 				performDesktopChange(clickX, clickY,
-									event.getX(), event.getY());
+									(int)event.getX(), (int)event.getY());
 				return true;
 			}
 		}
@@ -199,7 +201,7 @@ public class Screen extends LinearLayout implements DragController {
 		return (dragInProgress || super.dispatchTouchEvent(event));
 	}
 
-	private void performDesktopChange(float startX, float startY, float x, float y)
+	private void performDesktopChange(int startX, int startY, int x, int y)
 	{
 		if(myHome.getInstance().isDiamondLayout())
 		{
@@ -207,7 +209,7 @@ public class Screen extends LinearLayout implements DragController {
 		}
 		else
 		{
-			float difference = startX - x;
+			int difference = startX - x;
 			
 			if(difference < 0)
 				workspace.scrollTo((int) ((workspace.getCurrentDesktopNum() * getWidth())+difference), 0);
@@ -300,8 +302,8 @@ public class Screen extends LinearLayout implements DragController {
 				
 				lastMovementEvent = event;
 
-				lastMovementEventX = event.getX();
-				lastMovementEventY = event.getY();
+				lastMovementEventX = (int)event.getX();
+				lastMovementEventY = (int)event.getY();
 				break;
 			
 			case MotionEvent.ACTION_UP:
@@ -418,14 +420,14 @@ public class Screen extends LinearLayout implements DragController {
 			{
 				int id = item.getAppWidgetId();
 				item.setAppWidgetView(null);
-				myHome.getAppWidgetHost().deleteAppWidgetId(id);
+				WidgetCache.getInstance().deleteAppWidgetId(id);
 			}
 			
 			myHome.getInstance().storeRemoveItem(item);
 		}
 	}
 	
-	private boolean inDeletePosition(float x, float y)
+	private boolean inDeletePosition(int x, int y)
 	{
 		boolean land = getWidth() > getHeight();
 		
@@ -443,11 +445,11 @@ public class Screen extends LinearLayout implements DragController {
 		return false;
 	}
 
-	public float getClickX() {
+	public int getClickX() {
 		return clickX;
 	}
 
-	public float getClickY() {
+	public int getClickY() {
 		return clickY;
 	}
 }

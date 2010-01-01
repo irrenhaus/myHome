@@ -11,7 +11,7 @@
 <string name="dialog_button_cancel">Cancel</string>
 <string name="dialog_button_add">Add</string>
 <string name="menu_entry_add_place">Add MyPlace</string>
-<string name="fatal_crash_message">MyHome crashed unfortunately. I'm sorry about that.</string>
+<string name="fatal_crash_message">MyHome crashed last time.\nI'm sorry about that.\nDo you want to send me an EMail with the (automatically filled in) details?\nThis is very usefull :)</string>
 <string name="fatal_crash_title">Fatal Crash</string>
 <string name="dialog_title_uninstall">Uninstall</string>
 <string name="dialog_message_uninstall">Do you really want to uninstall this application?</string>
@@ -21,4 +21,6 @@
 <string name="CrashReport_MailBody">Error</string>
 <string name="error_desktop_full">This desktop is already full!</string>
 <string name="collecting_error_trace">Collecting error trace. Please be patient.</string>
+<string name="loading_please_wait">Loading...\nPlease be patient :)</string>
+<string name="loading_done">Loading done.\nHave fun :)</string>
 </resources>

@@ -79,7 +79,7 @@ public class AppsAdapter extends BaseAdapter {
 		final ApplicationInfo info = apps.get(position);
 		
 		((ShortcutTextView)convertView).setText(info.name);
-		((ShortcutTextView)convertView).setCompoundDrawablesWithIntrinsicBounds(null,
+		((ShortcutTextView)convertView).setCompoundDrawables(null,
 																		info.icon,
 																		null,
 																		null);

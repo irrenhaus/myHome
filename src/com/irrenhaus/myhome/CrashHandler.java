@@ -2,6 +2,7 @@ package com.irrenhaus.myhome;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
@@ -12,8 +13,11 @@ import java.io.Writer;
 import java.util.Date;
 import java.util.Random;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -249,35 +253,63 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 		return GetErrorFileList().length > 0;
 	}
 
-	public void CheckErrorAndSendMail(Context _context) {
+	public void CheckErrorAndSendMail(final Context _context) {
 		try {
 			if (bIsThereAnyErrorFile()) {
-				Toast.makeText(_context, R.string.collecting_error_trace, Toast.LENGTH_SHORT).show();
-				String WholeErrorText = "";
-				String[] ErrorFileList = GetErrorFileList();
-				int curIndex = 0;
-				// We limit the number of crash reports to send ( in order not
-				// to be too slow )
-				final int MaxSendMail = 5;
-				for (String curString : ErrorFileList) {
-					if (curIndex++ <= MaxSendMail) {
-						WholeErrorText += "New Trace collected :\n";
-						WholeErrorText += "=====================\n ";
-						String filePath = FilePath + "/" + curString;
-						BufferedReader input = new BufferedReader(
-								new FileReader(filePath));
-						String line;
-						while ((line = input.readLine()) != null) {
-							WholeErrorText += line + "\n";
+				AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+				
+				builder.setTitle(R.string.fatal_crash_title);
+				builder.setMessage(R.string.fatal_crash_message);
+				
+				builder.setPositiveButton(R.string.dialog_button_ok, new OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						String WholeErrorText = "";
+						try {
+							String[] ErrorFileList = GetErrorFileList();
+							int curIndex = 0;
+							// We limit the number of crash reports to send ( in order not
+							// to be too slow )
+							final int MaxSendMail = 5;
+							for (String curString : ErrorFileList) {
+								if (curIndex++ <= MaxSendMail) {
+									WholeErrorText += "New Trace collected :\n";
+									WholeErrorText += "=====================\n ";
+									String filePath = FilePath + "/" + curString;
+									BufferedReader input;
+									input = new BufferedReader(new FileReader(filePath));
+									String line;
+									while ((line = input.readLine()) != null) {
+										WholeErrorText += line + "\n";
+									}
+									input.close();
+								}
+	
+								// DELETE FILES !!!!
+								File curFile = new File(FilePath + "/" + curString);
+								curFile.delete();
+							}
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
-						input.close();
+						SendErrorMail(_context, WholeErrorText);
+						dialog.cancel();
 					}
-
-					// DELETE FILES !!!!
-					File curFile = new File(FilePath + "/" + curString);
-					curFile.delete();
-				}
-				SendErrorMail(_context, WholeErrorText);
+				});
+				
+				builder.setNegativeButton(R.string.dialog_button_cancel, new OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						String[] ErrorFileList = GetErrorFileList();
+						for (String curString : ErrorFileList) {
+							File curFile = new File(FilePath + "/" + curString);
+							curFile.delete();
+						}
+						dialog.cancel();
+					}
+				});
+				
+				builder.create().show();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -146,6 +146,8 @@ final class Utilities {
                 icon = new BitmapDrawable(thumb);
             }
         }
+        
+        icon.setBounds(0, 0, sIconWidth, sIconHeight);
 
         return icon;
     }

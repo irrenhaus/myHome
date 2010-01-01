@@ -39,7 +39,9 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	private OnLongClickListener onLongClickListener;
 	
 	private	int				desktopNumber = -1;
-	private boolean messageShown;
+	private boolean 		messageShown;
+	private boolean 		vacantCellsUpdated;
+	private WidgetCache 	widgetCache = WidgetCache.getInstance();
 	
 	public DesktopView(Context context) {
 		super(context);
@@ -87,11 +89,15 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			getChildAt(i).setOnLongClickListener(l);
 	}
 	
-	public void addAppWidget(MyHomeAppWidgetHostView view, AppWidgetProviderInfo info, int id)
+	public void addAppWidget(boolean configure, int id)
 	{
-		int span[] = this.rectToCell(info.minWidth, info.minHeight);
+		int pos = widgetCache.getWidgetPosForId(id);
+		AppWidgetProviderInfo info = widgetCache.getAppWidgetInfo(pos);
+		MyHomeAppWidgetHostView view = widgetCache.getAppWidgetView(pos);
 		
-		vacantCells = this.findAllVacantCells(null, null);
+		int span[] = rectToCell(info.minWidth, info.minHeight);
+		
+		vacantCells = findAllVacantCells(null, null);
 		
 		final Point p = new Point((int)myHome.getInstance().getScreen().getClickX(),
 								(int)myHome.getInstance().getScreen().getClickY());
@@ -107,39 +113,38 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		Point to = new Point(cell[0], cell[1]);
 		Point size = new Point(span[0], span[1]);
 		
-		addAppWidget(view, info, id, to, size);
+		addAppWidget(configure, id, to, size);
 	}
 	
-	public void addAppWidget(MyHomeAppWidgetHostView view,
-			AppWidgetProviderInfo info, int id, Point to, Point size) {
+	public void addAppWidget(boolean configure, int id, Point to, Point size) {
 		CellLayout.LayoutParams params = new CellLayout.LayoutParams(to.x, to.y, size.x, size.y);
 		
-		view.setLayoutParams(params);
+		int pos = widgetCache.getWidgetPosForId(id);
+		widgetCache.setLayoutParams(pos, params);
 		
-		if(info.configure != null)
+		if((configure && !widgetCache.startWidgetConfigure(pos)) || !configure)
 		{
-			Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE);
-			intent.setComponent(info.configure);
-			intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id);
-			
-			myHome.getInstance().startWidgetConfigure(intent, view, info, params);
-		}
-		else
-		{
-			completeAddWidget(view, info, id, params);
+			completeAddWidget(id);
 		}
 	}
 	
-	public void completeAddWidget(MyHomeAppWidgetHostView view,
-			AppWidgetProviderInfo info, int id, CellLayout.LayoutParams params)
+	public void completeAddWidget(int id)
 	{
-		DesktopItem item = new DesktopItem(context, DesktopItem.APP_WIDGET, params, desktopNumber);
+		int pos = widgetCache.getWidgetPosForId(id);
+		AppWidgetProviderInfo info = widgetCache.getAppWidgetInfo(pos);
+		MyHomeAppWidgetHostView view = widgetCache.getAppWidgetView(pos);
+		
+		DesktopItem item = new DesktopItem(context, DesktopItem.APP_WIDGET,
+				(CellLayout.LayoutParams) view.getLayoutParams(), desktopNumber);
 		item.setAppWidget(info, view, id);
 		
 		item.getView().setOnClickListener(onClickListener);
 		item.getView().setOnLongClickListener(onLongClickListener);
 		
-		this.addView(item.getView());
+		if(item.getView().getParent() != null)
+			((DesktopView)item.getView().getParent()).removeView(item.getView());
+		
+		addView(item.getView());
 		
 		myHome.getInstance().storeAddItem(item);
 	}
@@ -274,8 +279,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 				
 				openedFolder.getAdapter().reload();
 				openedFolder.getAdapter().notifyDataSetChanged();
-				
-				Log.d("myHome", "Dropped into folder "+openedFolder.getTitle());
 			}
 		}
 		else
@@ -345,7 +348,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		estDropPosition = new Point();
 		messageShown = false;
 		
-		vacantCells = this.findAllVacantCells(null, null);
+		vacantCellsUpdated = false;
 	}
 
 	@Override
@@ -358,10 +361,11 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		dragPosition.x = position.x;
 		dragPosition.y = position.y;
 			
+		
 		if(myHome.getInstance().getWorkspace().getOpenedFolder() == null)
 		{
 			vacantCells = findAllVacantCells(null, null);
-				
+			
 			int[] p = null;
 			
 			if(info instanceof DesktopItem)
@@ -413,6 +417,11 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			
 			int[] pixel = new int[2];
 			this.cellToPoint(p[0], p[1], pixel);
+			
+			if(pixel == null)
+				return;
+			if(estDropPosition == null)
+				estDropPosition = new Point();
 					
 			estDropPosition.x = pixel[0];
 			estDropPosition.y = pixel[1];

@@ -72,7 +72,7 @@ public class DesktopItem {
 			{
 				v.setText(title);
 				
-				v.setCompoundDrawablesWithIntrinsicBounds(null,
+				v.setCompoundDrawables(null,
 														  Utilities.createIconThumbnail(icon,
 																  context),
 														  null,

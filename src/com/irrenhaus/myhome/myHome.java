@@ -26,6 +26,7 @@ import android.view.View.OnClickListener;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
 
@@ -33,16 +34,9 @@ public class myHome extends Activity {
 	private Workspace					workspace = null;
 	private Screen						screen = null;
 
-	private static MyHomeAppWidgetHost	appWidgetHost = null;
-	private static final int			appWidgetHostID = 1337;
-
 	private static final int			PICK_WIDGET = 10;
 
 	public  static final int			ADD_WIDGET = 20;
-	
-	private	MyHomeAppWidgetHostView		hostViewTmp;
-	private AppWidgetProviderInfo		providerInfoTmp;
-	private CellLayout.LayoutParams	 	paramsTmp;
 
 	private MyHomeDB 					homeDb;
 
@@ -66,6 +60,7 @@ public class myHome extends Activity {
         CrashHandler.getInstance().CheckErrorAndSendMail(this);
         
         AppsCache.getInstance().setContext(getApplicationContext());
+        WidgetCache.getInstance().init(getApplicationContext());
         
         workspace = (Workspace)findViewById(R.id.workspace);
         workspace.setHome(this);
@@ -76,7 +71,7 @@ public class myHome extends Activity {
         appsGridButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if(workspace.isAppsGridOpened())
-					workspace.closeAllAppsGrid(null);
+					workspace.closeTrayView(null);
 				else
 					workspace.openAllAppsGrid();
 			}
@@ -86,7 +81,9 @@ public class myHome extends Activity {
         myPlacesButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				if(workspace.isMyPlacesOpened())
-					workspace.closeMyPlaces(null);
+					workspace.closeTrayView(null);
+				else if(workspace.getOpenedFolder() != null && !workspace.isFolderOpenedInScreen())
+					workspace.closeFolder();
 				else
 					workspace.openMyPlaces();
 			}
@@ -99,10 +96,11 @@ public class myHome extends Activity {
         mgr.setActivity(this);
         mgr.get();
         
-        myHome.setAppWidgetHost(new MyHomeAppWidgetHost(this, myHome.appWidgetHostID));
-        
 		if(!AppsCache.getInstance().isLoadingDone())
+		{
+			Toast.makeText(this, R.string.loading_please_wait, Toast.LENGTH_SHORT).show();
 			AppsCache.getInstance().start();
+		}
 		else
 			AppsCache.getInstance().sendLoadingDone();
 		
@@ -113,8 +111,6 @@ public class myHome extends Activity {
     public void onStop()
     {
     	super.onStop();
-
-        myHome.getAppWidgetHost().stopListening();
     }
     
     public static myHome getInstance()
@@ -217,12 +213,11 @@ public class myHome extends Activity {
 		super.onResume();
     	
 		openDatabase();
-        myHome.getAppWidgetHost().startListening();
 	}
 	
     public void startWidgetPicker()
     {
-    	int widgetid = myHome.getAppWidgetHost().allocateAppWidgetId();
+    	int widgetid = WidgetCache.getInstance().allocateAppWidgetId();
 		
 		Intent picker = new Intent(AppWidgetManager.ACTION_APPWIDGET_PICK);
 		picker.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetid);
@@ -242,18 +237,12 @@ public class myHome extends Activity {
 					int widgetid = data.getExtras().getInt(AppWidgetManager.EXTRA_APPWIDGET_ID);
 					
 					if(resultCode != Activity.RESULT_OK)
-						myHome.getAppWidgetHost().deleteAppWidgetId(widgetid);
+						WidgetCache.getInstance().deleteAppWidgetId(widgetid);
 					else
 					{
-						AppWidgetProviderInfo appWidget = AppWidgetManager.getInstance(myHome.this).getAppWidgetInfo(widgetid);
+						WidgetCache.getInstance().widgetReady(widgetid);
 						
-						MyHomeAppWidgetHostView view = (MyHomeAppWidgetHostView)myHome.
-													getAppWidgetHost().
-													createView(myHome.this, widgetid,
-													appWidget);
-						view.setAppWidget(widgetid, appWidget);
-						
-						workspace.getCurrentDesktop().addAppWidget(view, appWidget, widgetid);
+						workspace.getCurrentDesktop().addAppWidget(true, widgetid);
 					}
 				}
 		    	else if(requestCode == ADD_WIDGET)
@@ -261,12 +250,11 @@ public class myHome extends Activity {
 		    		int id = data.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
 		    		if(resultCode == Activity.RESULT_OK && id != -1)
 		    		{
-		    			workspace.getCurrentDesktop().completeAddWidget(hostViewTmp, providerInfoTmp,
-		    						id, paramsTmp);
+		    			workspace.getCurrentDesktop().completeAddWidget(id);
 		    		}
 		    		else
 		    		{
-		    			getAppWidgetHost().deleteAppWidgetId(id);
+		    			WidgetCache.getInstance().deleteAppWidgetId(id);
 		    		}
 		    	}
 			}
@@ -447,20 +435,7 @@ public class myHome extends Activity {
 		homeDb.close();
     }
 
-	public static AppWidgetHost getAppWidgetHost() {
-		return appWidgetHost;
-	}
-
-	public static void setAppWidgetHost(MyHomeAppWidgetHost appWidgetHost) {
-		myHome.appWidgetHost = appWidgetHost;
-	}
-
-	public void startWidgetConfigure(Intent intent, MyHomeAppWidgetHostView view,
-			AppWidgetProviderInfo info, LayoutParams params) {
-		hostViewTmp = view;
-		providerInfoTmp = info;
-		paramsTmp = params;
-		
+	public void startWidgetConfigure(Intent intent) {
 		startActivityForResult(intent, myHome.ADD_WIDGET);
 	}
 	

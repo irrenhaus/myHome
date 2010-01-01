@@ -29,7 +29,7 @@ public class Folder extends LinearLayout implements DragSource {
 	
 	private DragController		dragCtrl;
 	
-	private boolean				opened = false;
+	private boolean				open = false;
 	private Runnable doOnAnimationEnd;
 
 	public Folder(Context context, String title) {
@@ -73,7 +73,7 @@ public class Folder extends LinearLayout implements DragSource {
 		
 		text.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				myHome.getInstance().getWorkspace().closeFolderAnim(Folder.this);
+				myHome.getInstance().getWorkspace().closeFolder();
 			}
 		});
 		
@@ -106,10 +106,14 @@ public class Folder extends LinearLayout implements DragSource {
 	@Override
 	protected void onAnimationEnd()
 	{
-		if(opened)
+		Log.d("myHome", "Animation end. Open:"+open);
+		
+		if(open)
 			close();
 		else
-			opened = true;
+			open = true;
+		
+		Log.d("myHome", "Animation end. After Open:"+open+". run: "+(doOnAnimationEnd != null));
 		
 		if(doOnAnimationEnd != null)
 		{
@@ -120,8 +124,9 @@ public class Folder extends LinearLayout implements DragSource {
 	
 	public void close()
 	{
-		myHome.getInstance().getWorkspace().closeFolder(this);
-		opened = false;
+		//myHome.getInstance().getWorkspace().closeFolder();
+		
+		open = false;
 	}
 
 	public String getTitle() {
@@ -171,6 +176,35 @@ public class Folder extends LinearLayout implements DragSource {
 	}
 
 	public void setDoOnAnimationEnd(Runnable doOnAnimationEnd) {
+		Log.d("myHome", "setDoOnAnimationEnd");
 		this.doOnAnimationEnd = doOnAnimationEnd;
+	}
+
+	public AppsGrid getGrid() {
+		return grid;
+	}
+	
+	public void setTitlebar(boolean t)
+	{
+		if(t)
+			titleBar.setVisibility(View.VISIBLE);
+		else
+			titleBar.setVisibility(View.GONE);
+	}
+	
+	public void setBackground(boolean t)
+	{
+		if(!t)
+			this.setBackgroundDrawable(null);
+		else
+			this.setBackgroundResource(R.drawable.folder_bg);
+	}
+
+	public boolean isOpen() {
+		return open;
+	}
+
+	public void setOpen(boolean opened) {
+		this.open = opened;
 	}
 }

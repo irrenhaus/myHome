@@ -18,6 +18,7 @@ import android.view.View.OnLongClickListener;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
@@ -43,12 +44,15 @@ public class Workspace extends ViewGroup
 	private myHome				home = null;
 	
 	private	Folder				openedFolder;
+	private boolean				folderOpenedInScreen = false;
 	private boolean				myPlacesOpened = false;
 	private boolean				firstLayout = false;
+	private	boolean				trayViewOpened = false;
 	
 	private Animation			fadeInAnimation;
 	private Animation			fadeOutAnimation;
 	private Animation			desktopItemClickAnimation;
+	private TrayView			trayView;
 	
 	public Workspace(Context context) {
 		super(context);
@@ -95,6 +99,8 @@ public class Workspace extends ViewGroup
         fadeInAnimation = AnimationUtils.loadAnimation(home, R.anim.fadein);
         fadeOutAnimation = AnimationUtils.loadAnimation(home, R.anim.fadeout);
         desktopItemClickAnimation = AnimationUtils.loadAnimation(home, R.anim.desktop_item_click);
+        
+        trayView = new TrayView(home, allAppsGrid, myPlacesGrid);
 	}
 	
 	public void gotoDesktop(int num)
@@ -120,99 +126,98 @@ public class Workspace extends ViewGroup
 
 	public void closeAllOpen()
 	{
-		if(myPlacesOpened)
-			closeMyPlaces(null);
-		if(isAppsGridOpened())
-			closeAllAppsGrid(null);
+		if(trayViewOpened)
+			closeTrayView(null);
 	}
 	
 	public void closeAllOpenFor(Runnable run)
 	{
-		if(myPlacesOpened)
-			closeMyPlaces(run);
-		if(isAppsGridOpened())
-			closeAllAppsGrid(run);
+		boolean ran = false;
+		if(trayViewOpened)
+		{
+			closeTrayView(run);
+			ran = true;
+		}
+		
+		if(!ran)
+			run.run();
 	}
 	
 	public void openAllAppsGrid()
     {
-		closeAllOpen();
-    	CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
-    	((DesktopView)getCurrentDesktop()).addView(allAppsGrid, -1, lp);
-    	appsGridOpened = true;
-    	allAppsGrid.startAnimation(fadeInAnimation);
+		if(!trayViewOpened)
+		{
+			trayView.setGrid(TrayView.ALL_APPS_GRID);
+			openTrayView();
+		}
+		
+		trayView.gotoGrid(TrayView.ALL_APPS_GRID);
     }
     
-    public void closeAllAppsGrid(final Runnable run)
+	public void openTrayView()
+	{
+		if(!trayViewOpened)
+		{
+			CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
+	    	((DesktopView)getCurrentDesktop()).addView(trayView, -1, lp);
+	    	trayViewOpened = true;
+	    	trayView.startAnimation(fadeInAnimation);
+		}
+	}
+	
+    public void closeTrayView(final Runnable run)
     {
-    	allAppsGrid.setDoOnAnimationEnd(new Runnable() {
+    	trayView.setDoOnAnimationEnd(new Runnable() {
 			public void run() {
-		    	((DesktopView)getCurrentDesktop()).removeView(allAppsGrid);
-		    	appsGridOpened = false;
+		    	((DesktopView)getCurrentDesktop()).removeView(trayView);
+		    	trayViewOpened = false;
+		    	if(openedFolder != null && !folderOpenedInScreen)
+		    		closeFolderWithoutTrayView();
 				if(run != null)
 					run.run();
 			}
 		});
-    	allAppsGrid.startAnimation(fadeOutAnimation);
+    	trayView.startAnimation(fadeOutAnimation);
     }
 
 	public void openMyPlaces() {
-		closeAllOpen();
-		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
-    	((DesktopView)getCurrentDesktop()).addView(myPlacesGrid, -1, lp);
-		myPlacesOpened = true;
-		myPlacesGrid.startAnimation(fadeInAnimation);
-	}
-
-	public void closeMyPlaces(final Runnable run) {
-		myPlacesGrid.setDoOnAnimationEnd(new Runnable() {
-			public void run() {
-		    	((DesktopView)getCurrentDesktop()).removeView(myPlacesGrid);
-				myPlacesOpened = false;
-				if(run != null)
-					run.run();
-			}
-		});
-		myPlacesGrid.startAnimation(fadeOutAnimation);
+		if(!trayViewOpened)
+		{
+			trayView.setGrid(TrayView.MY_PLACES_GRID);
+			openTrayView();
+		}
+		
+		trayView.gotoGrid(TrayView.MY_PLACES_GRID);
 	}
 
 	public boolean isMyPlacesOpened() {
-		return myPlacesOpened;
+		return (trayViewOpened && trayView.isMyPlacesGridOpened());
 	}
     
     public void openFolder(final Folder f)
     {
-		closeAllOpen();
+		f.setNumColumns(4);
 		
-		if(openedFolder != null)
-			closeFolder(openedFolder);
-		
-		f.setNumColumns(AppsGrid.NUM_COLUMNS_APPSVIEW);
+		openTrayView();
+    	trayView.openFolder(f);
     	
-		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
-		((DesktopView)getCurrentDesktop()).addView(f, -1, lp);
-		openedFolder = f;
-		
-		f.startAnimation(fadeInAnimation);
-
-		openedFolder.setOnItemClickListener(this);
-		openedFolder.setOnItemLongClickListener(this);
-		openedFolder.setDragController(myHome.getInstance().getScreen());
+    	openedFolder = f;
+		folderOpenedInScreen = false;
     }
     
     public void openFolderInScreen(final Folder f, DesktopItem caller)
     {
-		closeAllOpen();
+		//closeAllOpen();
 		
 		if(openedFolder != null)
 		{
 			if(openedFolder == f)
 			{
-				closeFolderAnim(openedFolder);
+				closeFolderAnim();
 				return;
 			}
 			else
-				closeFolder(openedFolder);
+				closeFolder();
 		}
     	
 		int posX = 0;
@@ -240,21 +245,72 @@ public class Workspace extends ViewGroup
 		openedFolder.setOnItemClickListener(this);
 		openedFolder.setOnItemLongClickListener(this);
 		openedFolder.setDragController(myHome.getInstance().getScreen());
+		
+		folderOpenedInScreen = true;
     }
     
-    public void closeFolderAnim(final Folder f)
+    public void closeFolderAnim()
     {
-		f.startAnimation(fadeOutAnimation);
+    	if(openedFolder == null)
+    		return; 
+    	
+    	openedFolder.setDoOnAnimationEnd(new Runnable() {
+			public void run() {
+				getCurrentDesktop().removeView(openedFolder);
+				
+				openedFolder = null;
+				
+				folderOpenedInScreen = false;
+			}
+    	});
+    	openedFolder.startAnimation(fadeOutAnimation);
     }
     
-    public void closeFolder(final Folder f)
+    public void closeFolderWithoutTrayView()
     {
-    	((DesktopView)getCurrentDesktop()).removeView(f);
+    	if(openedFolder == null)
+    		return; 
+    	
+    	if(folderOpenedInScreen)
+    	{
+    		closeFolderAnim();
+    		return;
+    	}
+    	
+    	trayView.closeFolder();
+    	
+    	openedFolder.setOpen(false);
+    	
 		openedFolder = null;
+		
+		folderOpenedInScreen = false;
+    }
+    
+    public void closeFolder()
+    {
+    	if(openedFolder == null)
+    		return; 
+    	
+    	if(folderOpenedInScreen)
+    	{
+    		closeFolderAnim();
+    		return;
+    	}
+    	
+    	if(trayViewOpened)
+    	{
+    		closeTrayView(null);
+    	}
+    	
+    	openedFolder.setOpen(false);
+    	
+		openedFolder = null;
+		
+		folderOpenedInScreen = false;
     }
 	
 	public boolean isAnythingOpen() {
-		return (appsGridOpened || openedFolder != null || myPlacesOpened);
+		return (appsGridOpened || openedFolder != null || myPlacesOpened || trayViewOpened);
 	}
 
 	public void cancelAllLongPresses() {
@@ -277,7 +333,7 @@ public class Workspace extends ViewGroup
 	}
 
 	public boolean isAppsGridOpened() {
-		return appsGridOpened;
+		return (trayViewOpened && trayView.isAllAppsGridOpened());
 	}
 	
 	public boolean onItemLongClick(AdapterView<?> parent, View view,
@@ -301,16 +357,11 @@ public class Workspace extends ViewGroup
 		
 		if(parent instanceof MyPlacesGrid)
 		{
-			closeAllOpenFor(new Runnable() {
-				public void run() {
-					Folder f = ((MyPlacesAdapter)parent.getAdapter()).getFolder(position);
-					openFolder(f);
-				}
-			});
+			Folder f = ((MyPlacesAdapter)parent.getAdapter()).getFolder(position);
+			openFolder(f);
 		}
 		else if(parent instanceof AppsGrid)
 		{
-			Log.d("myHome", "AppsGrid");
 			((ShortcutTextView)view).setDoOnAnimationEnd(new Runnable() {
 				public void run() {
 					Runnable run = new Runnable() {
@@ -321,7 +372,7 @@ public class Workspace extends ViewGroup
 					if(parent.getParent() instanceof Folder)
 					{
 						((Folder)parent.getParent()).setDoOnAnimationEnd(run);
-						closeFolder(((Folder)parent.getParent()));
+						closeFolder();
 					}
 					else
 						closeAllOpenFor(run);
@@ -332,6 +383,13 @@ public class Workspace extends ViewGroup
 	}
 
 	public void onClick(View v) {
+		if(openedFolder != null)
+		{
+			if(folderOpenedInScreen)
+				closeFolderAnim();
+			return;
+		}
+		
 		Object tag = v.getTag();
 		
 		if((tag instanceof DesktopItem))
@@ -356,6 +414,13 @@ public class Workspace extends ViewGroup
 	}
 
 	public boolean onLongClick(View v) {
+		if(openedFolder != null)
+		{
+			if(folderOpenedInScreen)
+				openedFolder.close();
+			return true;
+		}
+		
 		Object tag = v.getTag();
 		
 		if((tag instanceof DesktopItem))
@@ -465,20 +530,14 @@ public class Workspace extends ViewGroup
 							public void run() {
 				    			final int widgetid = Integer.parseInt(intentUri);
 				    			
-				    			final AppWidgetProviderInfo info = AppWidgetManager.
-				    								getInstance(home).getAppWidgetInfo(widgetid);
-				    			final MyHomeAppWidgetHostView view = (MyHomeAppWidgetHostView) myHome.getAppWidgetHost().
-				    									createView(home, widgetid, info);
-				    			view.setAppWidget(widgetid, info);
-				    			info.configure = null;
-				    			
 				    			if(desktop >= 0 && desktop < NUM_DESKTOPS)
 								{
 									final DesktopView d = getDesktop(desktop);
 					    			Point to = new Point(params.cellX, params.cellY);
 					    			Point size = new Point(params.cellHSpan, params.cellVSpan);
-					    					
-					    			d.addAppWidget(view, info, widgetid, to, size);
+					    			
+					    			WidgetCache.getInstance().widgetReady(widgetid);
+					    			d.addAppWidget(false, widgetid, to, size);
 								}
 							}
 						});
@@ -504,10 +563,15 @@ public class Workspace extends ViewGroup
 				((MyPlacesAdapter)myPlacesGrid.getAdapter()).notifyDataSetChanged();
 				closeAllOpen();
 				if(openedFolder != null)
-					closeFolderAnim(openedFolder);
+					closeFolder();
 			}
 		});
 		loadWorkspaceDatabase();
+		home.runOnUiThread(new Runnable() {
+			public void run() {
+				Toast.makeText(home, R.string.loading_done, Toast.LENGTH_SHORT).show();
+			}
+		});
 	}
 
 	public DesktopView getCurrentDesktop() {
@@ -585,5 +649,9 @@ public class Workspace extends ViewGroup
 				pos += width;
 			}
 		}
+	}
+
+	public boolean isFolderOpenedInScreen() {
+		return folderOpenedInScreen;
 	}
 }
