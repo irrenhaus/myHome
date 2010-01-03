@@ -1,20 +1,25 @@
 package com.irrenhaus.myhome;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.appwidget.AppWidgetHost;
-import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
-import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -46,6 +51,7 @@ public class myHome extends Activity {
 
 	private static final int			MENU_ENTRY_SETTINGS = R.string.menu_entry_settings;
 	private static final int			MENU_ENTRY_ADD_PLACE = R.string.menu_entry_add_place;
+	private static final int			MENU_ENTRY_RESTORE = R.string.menu_entry_restore_desktop;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -56,6 +62,10 @@ public class myHome extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         
         setContentView(R.layout.main);
+        
+        Config.readConfiguration(this);
+        
+        processInstanceState(savedInstanceState);
         
         CrashHandler.getInstance().CheckErrorAndSendMail(this);
         
@@ -106,11 +116,15 @@ public class myHome extends Activity {
 		
 		AppWidgetManager.getInstance(myHome.this);
     }
-    
-    @Override
+
+	@Override
     public void onStop()
     {
     	super.onStop();
+        
+        Config.saveConfiguration(this);
+    	
+    	storeToSDCard();
     }
     
     public static myHome getInstance()
@@ -131,12 +145,9 @@ public class myHome extends Activity {
     	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
     			Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
     	
-    	menu.add(1, MENU_ENTRY_SETTINGS,
-    			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS)).setIntent(intent);
-    	
     	menu.add(1, MENU_ENTRY_ADD_PLACE, ContextMenu.NONE,
-    			 res.getString(MENU_ENTRY_ADD_PLACE)).setOnMenuItemClickListener(
-    					 new OnMenuItemClickListener() {
+   			 res.getString(MENU_ENTRY_ADD_PLACE)).setOnMenuItemClickListener(
+   					 new OnMenuItemClickListener() {
 							public boolean onMenuItemClick(MenuItem arg0) {
 								AlertDialog.Builder builder =
 									new AlertDialog.Builder(myHome.this);
@@ -148,6 +159,10 @@ public class myHome extends Activity {
 														LayoutParams.FILL_PARENT));
 								
 								final EditText edit = new EditText(myHome.this);
+								
+								edit.setLayoutParams(new LinearLayout.LayoutParams(
+														LayoutParams.FILL_PARENT,
+														LayoutParams.FILL_PARENT));
 								
 								l.addView(edit);
 								
@@ -193,7 +208,51 @@ public class myHome extends Activity {
 								
 								return true;
 							}
-    					 });
+   					 });
+    	
+    	menu.add(1, MENU_ENTRY_RESTORE, ContextMenu.NONE,
+   			 res.getString(MENU_ENTRY_RESTORE)).setOnMenuItemClickListener(
+   					 new OnMenuItemClickListener() {
+							public boolean onMenuItemClick(MenuItem arg0) {
+								AlertDialog.Builder builder =
+									new AlertDialog.Builder(myHome.this);
+								
+								builder.setTitle(myHome.this.getResources().
+										getString(R.string.dialog_title_restore_desktop));
+								builder.setTitle(myHome.this.getResources().
+										getString(R.string.dialog_message_restore_desktop));
+
+								String pos = myHome.this.getResources().getString(
+													R.string.dialog_button_ok);
+								String neg = myHome.this.getResources().getString(
+										R.string.dialog_button_cancel);
+								
+								builder.setPositiveButton(pos,
+										new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int which) {
+										if(restoreFromSDCard())
+											workspace.loadWorkspaceDatabase();
+										
+										
+										dialog.cancel();
+									}
+								});
+								
+								builder.setNegativeButton(neg,
+										new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog, int which) {
+										dialog.cancel();
+									}
+								});
+								
+								builder.create().show();
+								
+								return true;
+							}
+   					 });
+    	
+    	menu.add(1, MENU_ENTRY_SETTINGS,
+    			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS)).setIntent(intent);
     	
     	return true;
     }
@@ -261,6 +320,108 @@ public class myHome extends Activity {
     	});
 	}
     
+    private void storeToSDCard()
+    {
+    	openDatabase();
+    	
+    	int count = 0;
+    	
+    	try
+    	{
+	    	File sdcard = Environment.getExternalStorageDirectory();
+	    	
+	    	if(sdcard == null || !sdcard.canWrite()) {
+	    		Log.d("myHome", "Cannot write to sdcard (sdcard == null || !sdcard.canWrite())");
+	    		return;
+	    	}
+	    	
+	    	File myFolder = new File(sdcard.getAbsolutePath()+"/myHome/");
+	    	if(!myFolder.exists() && !myFolder.mkdir()) {
+	    		Log.d("myHome", "Cannot write to sdcard (!myFolder.exists() && !myFolder.mkdir())");
+	    		return;
+	    	}
+	    	
+	    	File data = new File(myFolder.getAbsolutePath()+"/last_state.data");
+	    	if(data.exists())
+	    		data.delete();
+	    	
+	    	if(!data.createNewFile() || !data.canWrite()) {
+	    		Log.d("myHome", "Cannot write to sdcard (!data.createNewFile() || !data.canWrite())");
+	    		return;
+	    	}
+	    	
+	    	FileWriter fileWriter = new FileWriter(data);
+	    	BufferedWriter buf = new BufferedWriter(fileWriter);
+	    	
+	    	Cursor workspace = db.query(MyHomeDB.WORKSPACE_TABLE,
+										new String[] {DesktopItem.TYPE, DesktopItem.INTENT},
+										null, null, null, null, null);
+	    	
+	    	Cursor folder_def = db.query(MyHomeDB.FOLDER_DEFINITION_TABLE,
+										new String[] {Folder.TITLE},
+										null, null, null, null, null);
+	    	
+	    	Cursor folder_con = db.query(MyHomeDB.FOLDER_TABLE,
+										new String[] {Folder.TITLE, Folder.INTENT},
+										null, null, null, null, null);
+
+	    	String workspace_dump = DatabaseUtils.dumpCursorToString(workspace);
+	    	String folder_def_dump = DatabaseUtils.dumpCursorToString(folder_def);
+	    	String folder_con_dump = DatabaseUtils.dumpCursorToString(folder_con);
+
+	    	DatabaseUtils.dumpCursor(workspace);
+	    	
+	    	buf.write(workspace_dump+"\n");
+	    	buf.write(folder_def_dump+"\n");
+	    	buf.write(folder_con_dump+"\n");
+	    	
+	    	buf.close();
+	    	
+	    	workspace.close();
+	    	folder_def.close();
+	    	folder_con.close();
+    	} catch(IOException e) {
+    		Log.d("myHome", "Cannot write to sdcard");
+    	}
+    }
+    
+    private boolean restoreFromSDCard()
+    {
+    	openDatabase();
+    	
+    	try
+    	{
+	    	File sdcard = Environment.getExternalStorageDirectory();
+	    	
+	    	if(sdcard == null || !sdcard.canRead())
+	    		return false;
+	    	
+	    	File data = new File(sdcard.getAbsolutePath()+"/myHome/last_state.data");
+	    	if(!data.exists() || !data.canRead())
+	    		return false;
+	    	
+	    	FileReader fileReader = new FileReader(data);
+	    	BufferedReader buf = new BufferedReader(fileReader);
+
+	    	db.execSQL("DELETE FROM " + MyHomeDB.FOLDER_DEFINITION_TABLE + " WHERE 1");
+	    	db.execSQL("DELETE FROM " + MyHomeDB.FOLDER_TABLE + " WHERE 1");
+	    	db.execSQL("DELETE FROM " + MyHomeDB.WORKSPACE_TABLE + " WHERE 1");
+	    	
+	    	while(buf.ready())
+	    	{
+	    		String query = buf.readLine();
+	    		
+	    		db.execSQL(query);
+	    	}
+	    	
+	    	buf.close();
+    	} catch(IOException e) {
+    		Log.d("myHome", "Could not restore desktop.");
+    	}
+    	
+    	return true;
+    }
+    
     private boolean itemExistsInDatabase(ContentValues values)
     {
     	openDatabase();
@@ -326,8 +487,6 @@ public class myHome extends Activity {
     public void storeAddItem(DesktopItem item)
     {
     	openDatabase();
-    	
-    	Log.d("myHome", "StoreAddItem");
     	
     	ContentValues values = item.makeContentValues();
     	
@@ -433,6 +592,32 @@ public class myHome extends Activity {
 		
 		db.close();
 		homeDb.close();
+    }
+    
+    @Override
+    public void onSaveInstanceState(Bundle state)
+    {
+    	super.onSaveInstanceState(state);
+    	
+    	state.putInt(Config.CURRENT_DESKTOP_NUM_KEY,
+    			Config.getInt(Config.CURRENT_DESKTOP_NUM_KEY));
+    }
+    
+    private void processInstanceState(Bundle state) {
+    	if(state == null)
+    		return;
+    	
+    	Integer defDesktop = Config.getInt(Config.DEFAULT_DESKTOP_NUM_KEY);
+    	
+    	int screen = state.getInt(Config.CURRENT_DESKTOP_NUM_KEY, defDesktop);
+    	
+    	Config.putInt("current_desktop_num", screen);
+	}
+    
+    @Override
+    public void onRestoreInstanceState(Bundle state)
+    {
+    	super.onRestoreInstanceState(state);
     }
 
 	public void startWidgetConfigure(Intent intent) {

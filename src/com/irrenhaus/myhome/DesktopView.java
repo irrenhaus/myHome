@@ -426,8 +426,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			estDropPosition.x = pixel[0];
 			estDropPosition.y = pixel[1];
 		}
-		
-		invalidate();
 	}
 	
 	private int darkenIt(int color)

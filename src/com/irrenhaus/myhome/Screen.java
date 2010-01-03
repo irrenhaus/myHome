@@ -1,7 +1,5 @@
 package com.irrenhaus.myhome;
 
-import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,7 +10,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Vibrator;
 import android.util.AttributeSet;
@@ -20,8 +17,9 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
+
+import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
 public class Screen extends LinearLayout implements DragController {
 	//private ImageView desktopOverview = null;
@@ -41,8 +39,6 @@ public class Screen extends LinearLayout implements DragController {
 	private int					desktopToSet = 0;
 	
 	private Workspace			workspace;
-
-	private MotionEvent 		lastMovementEvent;
 
 	private int					dragModX;
 
@@ -90,7 +86,25 @@ public class Screen extends LinearLayout implements DragController {
     	
     	if(bmp != null)
     	{
-    		canvas.drawBitmap(bmp, 0, 0, defaultPaint);
+    		int count = Config.getInt(Config.NUM_DESKTOPS_KEY) + 1;
+    		
+    		int width = getWidth();
+    		int wallpaperWidth = bmp.getWidth();
+    		int scrollX = myHome.getInstance().getWorkspace().getScrollX();
+    		
+    		float offset = wallpaperWidth > width ? (count * width - wallpaperWidth) /
+    				(count * (float) width) : 1.0f;
+    		
+    		float x = scrollX * offset * -1;
+
+    		if (x + wallpaperWidth < getRight() - getLeft()) {
+    			x = getRight() - getLeft() - wallpaperWidth;
+    		}
+    		
+    		if(scrollX < 0)
+    			x = 0;
+
+    		canvas.drawBitmap(bmp, x, (getBottom() - getTop() - bmp.getHeight()) / 2, defaultPaint);
     	}
     	
     	super.dispatchDraw(canvas);
@@ -169,6 +183,8 @@ public class Screen extends LinearLayout implements DragController {
 				
 				desktopChangeInProgress = false;
 				
+				invalidate();
+				
 				return true;
 			}
 		}
@@ -226,6 +242,8 @@ public class Screen extends LinearLayout implements DragController {
 			else
 				desktopToSet = 0;
 		}
+		
+		invalidate();
 	}
     
     @Override
@@ -299,8 +317,6 @@ public class Screen extends LinearLayout implements DragController {
 					
 					invalidate();
 				}
-				
-				lastMovementEvent = event;
 
 				lastMovementEventX = (int)event.getX();
 				lastMovementEventY = (int)event.getY();

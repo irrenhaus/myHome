@@ -28,11 +28,9 @@ public class Workspace extends ViewGroup
 					   implements ApplicationLoadingListener,
 					   			  OnClickListener, OnLongClickListener,
 					   			  OnItemClickListener, OnItemLongClickListener{
-	public static final int		NUM_DESKTOPS = 3;
-	public static final int		DEFAULT_DESKTOP = 1;
-	
 	private DesktopView[] 		desktopView = null;
-	private int					currentDesktop = DEFAULT_DESKTOP;
+	private int					currentDesktop;
+	private int					numDesktops;
 	
 	private AppsGrid			allAppsGrid = null;
 	private MyPlacesGrid		myPlacesGrid = null;
@@ -66,9 +64,13 @@ public class Workspace extends ViewGroup
 	{
 		this.home = home;
 		
-        desktopView = new DesktopView[NUM_DESKTOPS];
+		numDesktops = Config.getInt(Config.NUM_DESKTOPS_KEY);
+		
+        desktopView = new DesktopView[numDesktops];
         
-        for(int i = 0; i < NUM_DESKTOPS; i++)
+        currentDesktop = Config.getInt(Config.CURRENT_DESKTOP_NUM_KEY);
+        
+        for(int i = 0; i < numDesktops; i++)
         {
         	desktopView[i] = new DesktopView(home);
             desktopView[i].setDragController(myHome.getInstance().getScreen());
@@ -105,7 +107,7 @@ public class Workspace extends ViewGroup
 	
 	public void gotoDesktop(int num)
 	{
-		if(num < 0 || num >= NUM_DESKTOPS)
+		if(num < 0 || num >= numDesktops)
 		{
 			scrollTo(currentDesktop * getWidth(), 0);
 			return;
@@ -114,14 +116,18 @@ public class Workspace extends ViewGroup
 		currentDesktop = num;
 		
 		scrollTo(currentDesktop * getWidth(), 0);
+		
+		Config.putInt(Config.CURRENT_DESKTOP_NUM_KEY, num);
 	}
 	
 	public void setDesktop(int num)
 	{
-		if(num < 0 || num >= NUM_DESKTOPS)
+		if(num < 0 || num >= numDesktops)
 			return;
 		
 		currentDesktop = num;
+		
+		Config.putInt(Config.CURRENT_DESKTOP_NUM_KEY, num);
 	}
 
 	public void closeAllOpen()
@@ -165,7 +171,11 @@ public class Workspace extends ViewGroup
 		}
 	}
 	
-    public void closeTrayView(final Runnable run)
+    public boolean isTrayViewOpened() {
+		return trayViewOpened;
+	}
+
+	public void closeTrayView(final Runnable run)
     {
     	trayView.setDoOnAnimationEnd(new Runnable() {
 			public void run() {
@@ -446,13 +456,15 @@ public class Workspace extends ViewGroup
 	}
 
 	public int getDesktopCount() {
-		return NUM_DESKTOPS;
+		return numDesktops;
 	}
     
     public void loadWorkspaceDatabase()
     {
     	Runnable run = new Runnable() {
 			public void run() {
+				closeAllOpen();
+				
 				MyHomeDB homeDb = new MyHomeDB(home);
 		    	SQLiteDatabase db = homeDb.getReadableDatabase();
 		    	
@@ -488,7 +500,7 @@ public class Workspace extends ViewGroup
 		    			
 		    			if(info != null)
 		    			{
-		    				if(desktop >= 0 && desktop < NUM_DESKTOPS)
+		    				if(desktop >= 0 && desktop < numDesktops)
 		    				{
 								final DesktopView d = getDesktop(desktop);
 		    					home.runOnUiThread(new Runnable() {
@@ -511,7 +523,7 @@ public class Workspace extends ViewGroup
 		    			
 		    			if(info != null)
 		    			{
-		    				if(desktop >= 0 && desktop < NUM_DESKTOPS)
+		    				if(desktop >= 0 && desktop < numDesktops)
 		    				{
 								final DesktopView d = getDesktop(desktop);
 		    					home.runOnUiThread(new Runnable() {
@@ -530,7 +542,7 @@ public class Workspace extends ViewGroup
 							public void run() {
 				    			final int widgetid = Integer.parseInt(intentUri);
 				    			
-				    			if(desktop >= 0 && desktop < NUM_DESKTOPS)
+				    			if(desktop >= 0 && desktop < numDesktops)
 								{
 									final DesktopView d = getDesktop(desktop);
 					    			Point to = new Point(params.cellX, params.cellY);
@@ -561,17 +573,14 @@ public class Workspace extends ViewGroup
 			public void run() {
 				((AppsAdapter)allAppsGrid.getAdapter()).notifyDataSetChanged();
 				((MyPlacesAdapter)myPlacesGrid.getAdapter()).notifyDataSetChanged();
-				closeAllOpen();
-				if(openedFolder != null)
-					closeFolder();
 			}
 		});
 		loadWorkspaceDatabase();
-		home.runOnUiThread(new Runnable() {
+		/*home.runOnUiThread(new Runnable() {
 			public void run() {
 				Toast.makeText(home, R.string.loading_done, Toast.LENGTH_SHORT).show();
 			}
-		});
+		});*/
 	}
 
 	public DesktopView getCurrentDesktop() {
@@ -579,7 +588,7 @@ public class Workspace extends ViewGroup
 	}
 
 	public DesktopView getDesktop(int pos) {
-		if(pos < 0 || pos >= NUM_DESKTOPS)
+		if(pos < 0 || pos >= numDesktops)
 			return null;
 		
 		return (DesktopView)desktopView[pos];
@@ -602,7 +611,7 @@ public class Workspace extends ViewGroup
 	}
 
 	public void removeAllDesktopFolders(Folder f) {
-		for(int i = 0; i < NUM_DESKTOPS; i++)
+		for(int i = 0; i < numDesktops; i++)
 		{	
 			getDesktop(i).removeDesktopFolder(f);
 		}

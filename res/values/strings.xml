@@ -23,4 +23,7 @@
 <string name="collecting_error_trace">Collecting error trace. Please be patient.</string>
 <string name="loading_please_wait">Loading...\nPlease be patient :)</string>
 <string name="loading_done">Loading done.\nHave fun :)</string>
+<string name="menu_entry_restore_desktop">Restore Desktop</string>
+<string name="dialog_title_restore_desktop">Restoring desktop</string>
+<string name="dialog_message_restore_desktop">Are you shure you want to restore your desktop?\nThis will remove all items from your desktop and replace them with the ones saved each time this app is in background.</string>
 </resources>
