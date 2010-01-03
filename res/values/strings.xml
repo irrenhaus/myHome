@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="wallpaper_changer_title">Select Wallpaper</string>
+    <string name="wallpaper_chooser_no_images">Sorry, there are no images at /sdcard/myHome/wallpaper.</string>
     <string name="action_menu_entry_wallpaper_changer">Wallpaper Changer</string>
     <string name="action_menu_entry_wallpaper">Set Wallpaper</string>
     <string name="action_menu_entry_widget">Add Widget</string>

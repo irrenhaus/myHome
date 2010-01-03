@@ -323,7 +323,9 @@ public class myHome extends Activity {
 								
 							case DESKTOP_ACTION_SET_WALLPAPER:
 							{
-				    			Log.d("myHome", "Set Wallpaper!");
+				    			Intent intent = new Intent(myHome.this, WallpaperChanger.class);
+				    			intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				    			startActivity(intent);
 								break;
 							}
 							

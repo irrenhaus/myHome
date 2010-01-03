@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 
 public class WallpaperManager implements Runnable {
 	private Activity				activity = null;
@@ -14,6 +15,7 @@ public class WallpaperManager implements Runnable {
 	
 	private boolean					resource = false;
 	private int						resourceId = -1;
+	private Drawable				drawable = null;
 	
 	private Thread					myself = null;
 	
@@ -55,6 +57,12 @@ public class WallpaperManager implements Runnable {
 		resourceId = res;
 	}
 	
+	public void selectWallpaperDrawable(Drawable u)
+	{
+		resource = false;
+		drawable = u;
+	}
+	
 	public synchronized boolean isDone()
 	{
 		return done;
@@ -67,6 +75,7 @@ public class WallpaperManager implements Runnable {
 	
 	public Bitmap getWallpaper()
 	{
+		get();
 		return wallpaper;
 	}
 	
@@ -116,6 +125,18 @@ public class WallpaperManager implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		else
+		{
+			try {
+				activity.setWallpaper(((BitmapDrawable)drawable).getBitmap());
+			} catch (IOException e) {
+				done = true;
+				e.printStackTrace();
+			}
+			drawable = null;
+		}
+		
+		get();
 		
 		done = true;
 	}

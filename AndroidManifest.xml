@@ -17,6 +17,7 @@
 
     
 
+<activity android:name="WallpaperChanger" android:label="@string/wallpaper_changer_title"></activity>
 </application>
     <uses-sdk android:minSdkVersion="4" />
 
