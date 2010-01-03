@@ -449,7 +449,7 @@ public class Workspace extends ViewGroup
 		}
 		else if(v instanceof DesktopView)
 		{
-			home.startWidgetPicker();
+			home.startDesktopActionPicker();
 		}
 		
 		return true;

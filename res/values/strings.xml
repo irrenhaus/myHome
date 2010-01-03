@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="action_menu_entry_wallpaper_changer">Wallpaper Changer</string>
+    <string name="action_menu_entry_wallpaper">Set Wallpaper</string>
+    <string name="action_menu_entry_widget">Add Widget</string>
     
     <string name="app_name">myHome</string>
 <string name="myPlacesDesktop">Desktop</string>

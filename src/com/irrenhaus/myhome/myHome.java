@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -28,10 +29,12 @@ import android.view.View;
 import android.view.Window;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.widget.AdapterView.OnItemSelectedListener;
 
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
 
@@ -39,13 +42,20 @@ public class myHome extends Activity {
 	private Workspace					workspace = null;
 	private Screen						screen = null;
 
-	private static final int			PICK_WIDGET = 10;
+	private static final int			PICK_WIDGET = 1;
+	public  static final int			ADD_WIDGET = 2;
+	private static final int			PICK_ACTION = 3;
+	
 
-	public  static final int			ADD_WIDGET = 20;
+	public static final int 			DESKTOP_ACTION_ADD_WIDGET = 0;
+	public static final int 			DESKTOP_ACTION_SET_WALLPAPER = 1;
+	
+	public static final int 			DESKTOP_ACTION_ITEM_COUNT = 2;
 
 	private MyHomeDB 					homeDb;
 
 	private SQLiteDatabase 				db;
+	private AlertDialog currentDialog;
 	
 	private static myHome				instance;
 
@@ -284,6 +294,50 @@ public class myHome extends Activity {
 		picker.putExtra(AppWidgetManager.EXTRA_CUSTOM_INFO, new ArrayList());
 		
 		startActivityForResult(picker, PICK_WIDGET);
+    }
+    
+    public void startDesktopActionPicker()
+    {
+    	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    	
+    	String items[] = new String[DESKTOP_ACTION_ITEM_COUNT];
+
+    	items[DESKTOP_ACTION_ADD_WIDGET] = getResources().
+    										getString(R.string.action_menu_entry_widget);
+    	items[DESKTOP_ACTION_SET_WALLPAPER] = getResources().
+    										getString(R.string.action_menu_entry_wallpaper);
+    	
+    	builder.setInverseBackgroundForced(true);
+    	builder.setCustomTitle(null);
+    	
+    	builder.setItems(items,
+    			new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						switch(which)
+						{
+							case DESKTOP_ACTION_ADD_WIDGET:
+							{
+				    			startWidgetPicker();
+								break;
+							}
+								
+							case DESKTOP_ACTION_SET_WALLPAPER:
+							{
+				    			Log.d("myHome", "Set Wallpaper!");
+								break;
+							}
+							
+							default:
+								Log.d("myHome", "Unknown pos: "+which);
+							}
+					
+						currentDialog.cancel();
+						currentDialog = null;
+					}
+    			});
+    	
+    	currentDialog = builder.create();
+    	currentDialog.show();
     }
     
     @Override
