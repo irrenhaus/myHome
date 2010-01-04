@@ -7,10 +7,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ContentValues;
 import android.content.DialogInterface;
@@ -29,12 +32,10 @@ import android.view.View;
 import android.view.Window;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View.OnClickListener;
-import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemSelectedListener;
 
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
 
@@ -55,11 +56,13 @@ public class myHome extends Activity {
 	private MyHomeDB 					homeDb;
 
 	private SQLiteDatabase 				db;
-	private AlertDialog currentDialog;
+	private AlertDialog					currentDialog;
+	private boolean						databaseChanged = false;
 	
 	private static myHome				instance;
 
 	private static final int			MENU_ENTRY_SETTINGS = R.string.menu_entry_settings;
+	private static final int			MENU_ENTRY_MYHOME_SETTINGS = R.string.menu_entry_myhome_settings;
 	private static final int			MENU_ENTRY_ADD_PLACE = R.string.menu_entry_add_place;
 	private static final int			MENU_ENTRY_RESTORE = R.string.menu_entry_restore_desktop;
 	
@@ -260,9 +263,13 @@ public class myHome extends Activity {
 								return true;
 							}
    					 });
-    	
-    	menu.add(1, MENU_ENTRY_SETTINGS,
+
+    	menu.add(2, MENU_ENTRY_SETTINGS,
     			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS)).setIntent(intent);
+
+    	menu.add(2, MENU_ENTRY_MYHOME_SETTINGS,
+    			ContextMenu.NONE, res.getString(MENU_ENTRY_MYHOME_SETTINGS)).setIntent(
+    					new Intent(this, Settings.class));
     	
     	return true;
     }
@@ -376,8 +383,50 @@ public class myHome extends Activity {
     	});
 	}
     
+    private String dumpCursorToSql(Cursor cursor, String table)
+    {
+    	String ret = "";
+    	String[] cols = cursor.getColumnNames();
+    	
+    	while(cursor.moveToNext())
+    	{
+    		String query = "INSERT INTO " + table + " (";
+    		
+    		for(int i = 0; i < cols.length; i++)
+    		{
+    			query += cols[i];
+    			if(i+1 < cols.length)
+    			{
+    				query += ", ";
+    			}
+    		}
+
+    		query += ") VALUES (";
+    		
+    		for(int i = 0; i < cols.length; i++)
+    		{
+    			try {
+    				query += ""+cursor.getInt(i);
+    			} catch (NumberFormatException e) {
+    				query += DatabaseUtils.sqlEscapeString(cursor.getString(i));
+    			}
+    			if(i+1 < cols.length)
+    				query += ", ";
+    		}
+    		
+    		query += ");";
+    		
+    		ret += query + "\n";
+    	}
+    	
+    	return ret;
+    }
+    
     private void storeToSDCard()
     {
+    	if(!databaseChanged)
+    		return;
+    	
     	openDatabase();
     	
     	int count = 0;
@@ -421,15 +470,13 @@ public class myHome extends Activity {
 										new String[] {Folder.TITLE, Folder.INTENT},
 										null, null, null, null, null);
 
-	    	String workspace_dump = DatabaseUtils.dumpCursorToString(workspace);
-	    	String folder_def_dump = DatabaseUtils.dumpCursorToString(folder_def);
-	    	String folder_con_dump = DatabaseUtils.dumpCursorToString(folder_con);
+	    	String workspace_dump = dumpCursorToSql(workspace, MyHomeDB.WORKSPACE_TABLE);
+	    	String folder_def_dump = dumpCursorToSql(folder_def, MyHomeDB.FOLDER_DEFINITION_TABLE);
+	    	String folder_con_dump = dumpCursorToSql(folder_con, MyHomeDB.FOLDER_TABLE);
 
-	    	DatabaseUtils.dumpCursor(workspace);
-	    	
-	    	buf.write(workspace_dump+"\n");
-	    	buf.write(folder_def_dump+"\n");
-	    	buf.write(folder_con_dump+"\n");
+	    	buf.write(workspace_dump);
+	    	buf.write(folder_def_dump);
+	    	buf.write(folder_con_dump);
 	    	
 	    	buf.close();
 	    	
@@ -439,6 +486,8 @@ public class myHome extends Activity {
     	} catch(IOException e) {
     		Log.d("myHome", "Cannot write to sdcard");
     	}
+    	
+    	databaseChanged = false;
     }
     
     private boolean restoreFromSDCard()
@@ -547,7 +596,10 @@ public class myHome extends Activity {
     	ContentValues values = item.makeContentValues();
     	
     	if(!itemExistsInDatabase(values))
+    	{
     		db.insert(MyHomeDB.WORKSPACE_TABLE, null, values);
+    		databaseChanged = true;
+    	}
     }
 
     public void storeUpdateItem(DesktopItem item)
@@ -558,9 +610,10 @@ public class myHome extends Activity {
     	
 		ContentValues values = item.makeContentValues();
 		
-		db.update(MyHomeDB.WORKSPACE_TABLE, values, DesktopItem.TYPE+"=? AND "+DesktopItem.INTENT+"=?",
+		if(db.update(MyHomeDB.WORKSPACE_TABLE, values, DesktopItem.TYPE+"=? AND "+DesktopItem.INTENT+"=?",
 				new String[] { String.valueOf(values.getAsInteger(DesktopItem.TYPE)),
-								values.getAsString(DesktopItem.INTENT)});
+								values.getAsString(DesktopItem.INTENT)}) > 0)
+			databaseChanged = true;
     }
     
     public void storeRemoveItem(DesktopItem item)
@@ -571,12 +624,11 @@ public class myHome extends Activity {
     	
     	ContentValues values = item.makeContentValues();
     	
-		db.delete(MyHomeDB.WORKSPACE_TABLE, DesktopItem.TYPE+"=? AND "+DesktopItem.INTENT+"=?",
+		if(db.delete(MyHomeDB.WORKSPACE_TABLE, DesktopItem.TYPE+"=? AND "+DesktopItem.INTENT+"=?",
 				new String[] { String.valueOf(values.getAsInteger(DesktopItem.TYPE)),
-								values.getAsString(DesktopItem.INTENT)});
+								values.getAsString(DesktopItem.INTENT)}) > 0)
+			databaseChanged = true;
     }
-    
-
 
     public boolean storeAddPlace(Folder folder)
     {
@@ -590,6 +642,8 @@ public class myHome extends Activity {
     	else
     		return false;
     	
+    	databaseChanged = true;
+    	
     	return true;
     }
 
@@ -600,8 +654,9 @@ public class myHome extends Activity {
     	ContentValues values = new ContentValues();
     	values.put(Folder.TITLE, folder.getTitle());
 		
-		db.update(MyHomeDB.FOLDER_DEFINITION_TABLE, values, Folder.TITLE+"=?",
-				new String[] {oldName});
+		if(db.update(MyHomeDB.FOLDER_DEFINITION_TABLE, values, Folder.TITLE+"=?",
+				new String[] {oldName}) > 0)
+			databaseChanged = true;
     }
     
     public void storeRemovePlace(Folder folder)
@@ -611,14 +666,13 @@ public class myHome extends Activity {
     	ContentValues values = new ContentValues();
     	values.put(Folder.TITLE, folder.getTitle());
     	
-		db.delete(MyHomeDB.FOLDER_DEFINITION_TABLE, Folder.TITLE+"=?",
-				new String[] {folder.getTitle()});
-    	
-		db.delete(MyHomeDB.FOLDER_TABLE, Folder.TITLE+"=?",
-				new String[] {folder.getTitle()});
-    	
-		db.delete(MyHomeDB.WORKSPACE_TABLE, DesktopItem.INTENT+"=?",
-				new String[] {folder.getTitle()});
+		if(db.delete(MyHomeDB.FOLDER_DEFINITION_TABLE, Folder.TITLE+"=?",
+				new String[] {folder.getTitle()}) > 0 ||
+			db.delete(MyHomeDB.FOLDER_TABLE, Folder.TITLE+"=?",
+				new String[] {folder.getTitle()}) > 0 ||
+			db.delete(MyHomeDB.WORKSPACE_TABLE, DesktopItem.INTENT+"=?",
+				new String[] {folder.getTitle()}) > 0)
+			databaseChanged = true;
     }
     
     public void storeAddShortcutToPlace(String intent, Folder folder)
@@ -630,15 +684,19 @@ public class myHome extends Activity {
     	values.put(Folder.INTENT, intent);
     	
     	if(!itemExistsInPlace(values))
+    	{
     		db.insert(MyHomeDB.FOLDER_TABLE, null, values);
+			databaseChanged = true;
+    	}
     }
     
     public void storeRemoveShortcutFromPlace(String intent, Folder folder)
     {
     	openDatabase();
     	
-		db.delete(MyHomeDB.FOLDER_TABLE, Folder.TITLE+"=? AND "+Folder.INTENT+"=?",
-				new String[] {folder.getTitle(), intent});
+		if(db.delete(MyHomeDB.FOLDER_TABLE, Folder.TITLE+"=? AND "+Folder.INTENT+"=?",
+				new String[] {folder.getTitle(), intent}) > 0)
+			databaseChanged = true;
     }
     
     @Override

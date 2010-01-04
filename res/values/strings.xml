@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="prefs_default_desktop_num">Default desktop</string>
+    <string name="prefs_num_desktops_title">Number of desktops</string>
+    <string name="prefs_desktop_prefs">Desktop Settings</string>
+    <string name="prefs_title">myHome Settings</string>
     <string name="wallpaper_changer_title">Select Wallpaper</string>
     <string name="wallpaper_chooser_no_images">Sorry, there are no images at /sdcard/myHome/wallpaper.</string>
     <string name="action_menu_entry_wallpaper_changer">Wallpaper Changer</string>
@@ -31,4 +35,5 @@
 <string name="menu_entry_restore_desktop">Restore Desktop</string>
 <string name="dialog_title_restore_desktop">Restoring desktop</string>
 <string name="dialog_message_restore_desktop">Are you shure you want to restore your desktop?\nThis will remove all items from your desktop and replace them with the ones saved each time this app is in background.</string>
+<string name="menu_entry_myhome_settings">myHome Settings</string>
 </resources>

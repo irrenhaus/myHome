@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android" android:title="@string/prefs_title">
+<PreferenceCategory android:title="@string/prefs_desktop_prefs"><ListPreference android:entryValues="@array/prefs_num_desktops_values" android:key="num_desktops" android:entries="@array/prefs_num_desktops_entries" android:title="@string/prefs_num_desktops_title"></ListPreference>
+<ListPreference android:entryValues="@array/prefs_default_desktop_num_values" android:key="default_desktop_num" android:entries="@array/prefs_default_desktop_num_entries" android:title="@string/prefs_default_desktop_num"></ListPreference>
+</PreferenceCategory>
+</PreferenceScreen>
