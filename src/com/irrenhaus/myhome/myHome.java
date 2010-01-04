@@ -405,11 +405,13 @@ public class myHome extends Activity {
     		
     		for(int i = 0; i < cols.length; i++)
     		{
-    			try {
+    			String name = cursor.getColumnName(i);
+    			if(name.equals(DesktopItem._ID) || name.equals(DesktopItem.TYPE) ||
+    					name.equals(DesktopView.DESKTOP_NUMBER))
     				query += ""+cursor.getInt(i);
-    			} catch (NumberFormatException e) {
+    			else
     				query += DatabaseUtils.sqlEscapeString(cursor.getString(i));
-    			}
+    			
     			if(i+1 < cols.length)
     				query += ", ";
     		}
@@ -459,20 +461,24 @@ public class myHome extends Activity {
 	    	BufferedWriter buf = new BufferedWriter(fileWriter);
 	    	
 	    	Cursor workspace = db.query(MyHomeDB.WORKSPACE_TABLE,
-										new String[] {DesktopItem.TYPE, DesktopItem.INTENT},
+										null,
 										null, null, null, null, null);
 	    	
 	    	Cursor folder_def = db.query(MyHomeDB.FOLDER_DEFINITION_TABLE,
-										new String[] {Folder.TITLE},
+										null,
 										null, null, null, null, null);
 	    	
 	    	Cursor folder_con = db.query(MyHomeDB.FOLDER_TABLE,
-										new String[] {Folder.TITLE, Folder.INTENT},
+										null,
 										null, null, null, null, null);
 
 	    	String workspace_dump = dumpCursorToSql(workspace, MyHomeDB.WORKSPACE_TABLE);
 	    	String folder_def_dump = dumpCursorToSql(folder_def, MyHomeDB.FOLDER_DEFINITION_TABLE);
 	    	String folder_con_dump = dumpCursorToSql(folder_con, MyHomeDB.FOLDER_TABLE);
+
+	    	Log.d("myHome", workspace_dump);
+	    	Log.d("myHome", folder_def_dump);
+	    	Log.d("myHome", folder_con_dump);
 
 	    	buf.write(workspace_dump);
 	    	buf.write(folder_def_dump);
