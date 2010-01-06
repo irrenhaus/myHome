@@ -3,6 +3,7 @@ package com.irrenhaus.myhome;
 import java.io.IOException;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -140,6 +141,8 @@ public class WallpaperManager implements Runnable {
 		
 		if(this.wallpaper != null)
 			this.wallpaper.recycle();
+		
+		activity.sendBroadcast(new Intent(Intent.ACTION_WALLPAPER_CHANGED));
 		
 		done = true;
 	}

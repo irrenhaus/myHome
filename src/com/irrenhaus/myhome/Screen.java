@@ -102,6 +102,13 @@ public class Screen extends LinearLayout implements DragController {
     	wallpaperMgr = WallpaperManager.getInstance();
 	}
 	
+	public void wallpaperChanged()
+	{
+		wallpaperBmp = wallpaperMgr.getWallpaper(getWidth(), getHeight());
+		
+		invalidate();
+	}
+	
 	@Override
     public void dispatchDraw(Canvas canvas)
     {

@@ -7,17 +7,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -28,12 +27,9 @@ import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Window;
 import android.view.MenuItem.OnMenuItemClickListener;
-import android.view.View.OnClickListener;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -59,6 +55,7 @@ public class myHome extends Activity {
 	private SQLiteDatabase 				db;
 	private AlertDialog					currentDialog;
 	private boolean						databaseChanged = false;
+	private BroadcastReceiver wallpaperReceiver;
 	
 	private static myHome				instance;
 
@@ -110,6 +107,25 @@ public class myHome extends Activity {
 			AppsCache.getInstance().sendLoadingDone();
 		
 		AppWidgetManager.getInstance(myHome.this);
+		
+		wallpaperReceiver = new BroadcastReceiver() {
+			public void onReceive(Context context, Intent intent) {
+				screen.wallpaperChanged();
+				Log.d("myHome", "Received :)");
+			}
+		};
+		
+		IntentFilter intentFilter = new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED);
+		
+		registerReceiver(wallpaperReceiver, intentFilter);
+    }
+    
+    @Override
+    public void onDestroy()
+    {
+    	super.onDestroy();
+    	
+    	unregisterReceiver(wallpaperReceiver);
     }
 
 	@Override
