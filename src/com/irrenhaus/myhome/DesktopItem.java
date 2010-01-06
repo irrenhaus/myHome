@@ -223,6 +223,9 @@ public class DesktopItem {
 	}
 
 	public void setFolder(Folder folder) {
+		if(folder == null)
+			return;
+		
 		this.folder = folder;
 		
 		this.title = folder.getTitle();

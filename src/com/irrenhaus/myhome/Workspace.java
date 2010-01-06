@@ -106,6 +106,8 @@ public class Workspace extends ViewGroup
         desktopItemClickAnimation = AnimationUtils.loadAnimation(home, R.anim.desktop_item_click);
         
         trayView = new TrayView(home, allAppsGrid, myPlacesGrid);
+		
+		setPadding(4, 4, 4, 4);
 	}
 	
 	public void gotoDesktop(int num)
@@ -474,9 +476,17 @@ public class Workspace extends ViewGroup
     
     public void loadWorkspaceDatabase()
     {
+		home.runOnUiThread(new Runnable() {
+			public void run() {
+				((DesktopView)getCurrentDesktop()).removeView(trayView);
+		    	trayViewOpened = false;
+		    	if(openedFolder != null && !folderOpenedInScreen)
+		    		closeFolderWithoutTrayView();
+			}
+		});
+		
     	Runnable run = new Runnable() {
 			public void run() {
-				closeAllOpen();
 				
 				MyHomeDB homeDb = new MyHomeDB(home);
 		    	SQLiteDatabase db = homeDb.getReadableDatabase();

@@ -20,6 +20,8 @@ public class WallpaperManager implements Runnable {
 	private Thread					myself = null;
 	
 	private Bitmap					wallpaper = null;
+
+	private boolean wallpaperChanged;
 	
 	private static WallpaperManager	instance = null;
 	
@@ -68,14 +70,12 @@ public class WallpaperManager implements Runnable {
 		return done;
 	}
 	
-	public void get()
+	public Bitmap getWallpaper(int w, int h)
 	{
-		wallpaper = ((BitmapDrawable)activity.getWallpaper()).getBitmap();
-	}
-	
-	public Bitmap getWallpaper()
-	{
-		get();
+		if(wallpaper == null || wallpaper.isRecycled())
+			wallpaper = Utilities.centerToFit(((BitmapDrawable)activity.getWallpaper()).getBitmap(),
+				w, h, activity);
+		
 		return wallpaper;
 	}
 	
@@ -136,9 +136,16 @@ public class WallpaperManager implements Runnable {
 			drawable = null;
 		}
 		
-		get();
+		wallpaperChanged = true;
+		
+		if(this.wallpaper != null)
+			this.wallpaper.recycle();
 		
 		done = true;
+	}
+
+	public boolean wallpaperChanged() {
+		return wallpaperChanged;
 	}
 }
 

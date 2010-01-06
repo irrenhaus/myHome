@@ -33,6 +33,7 @@ public class Screen extends LinearLayout implements DragController {
 	private DragSource			dragSource = null;
 	private Bitmap          	dragViewBitmap;
 	private Paint 				dragViewAlphaPaint;
+	private Paint 				dragViewDeletePaint;
 
 	private boolean				desktopChangeInProgress;
 
@@ -52,9 +53,13 @@ public class Screen extends LinearLayout implements DragController {
 
 	private Paint				defaultPaint = new Paint();
 
-	private Paint whitePaint;
+	private Paint				whitePaint;
 
-	private Paint blackPaint;
+	private Paint				blackPaint;
+
+	private WallpaperManager wallpaperMgr;
+
+	private Bitmap wallpaperBmp;
 	
 	public Screen(Context context) {
 		super(context);
@@ -82,6 +87,9 @@ public class Screen extends LinearLayout implements DragController {
 		
 		dragViewAlphaPaint = new Paint();
 		dragViewAlphaPaint.setARGB(128, 66, 66, 66);
+		
+		dragViewDeletePaint = new Paint();
+		dragViewDeletePaint.setARGB(96, 255, 0, 0);
 
 		blackPaint = new Paint();
 		blackPaint.setARGB(192, 0, 0, 0);
@@ -90,20 +98,26 @@ public class Screen extends LinearLayout implements DragController {
 		whitePaint = new Paint();
 		whitePaint.setARGB(192, 255, 255, 255);
 		whitePaint.setStyle(Style.FILL);
+		
+    	wallpaperMgr = WallpaperManager.getInstance();
 	}
 	
 	@Override
     public void dispatchDraw(Canvas canvas)
     {
-    	WallpaperManager mgr = WallpaperManager.getInstance();
-    	Bitmap bmp = Utilities.centerToFit(mgr.getWallpaper(), getWidth(), getHeight(), context);
-    	
-    	if(bmp != null)
+		boolean opened = workspace.isAnythingOpen();
+		
+		if(wallpaperMgr.wallpaperChanged() || wallpaperBmp == null || wallpaperBmp.isRecycled())
+		{
+			wallpaperBmp = wallpaperMgr.getWallpaper(getWidth(), getHeight());
+		}
+			
+    	if(wallpaperBmp != null && !wallpaperBmp.isRecycled())
     	{
     		int count = Config.getInt(Config.NUM_DESKTOPS_KEY) + 1;
     		
     		int width = getWidth();
-    		int wallpaperWidth = bmp.getWidth();
+    		int wallpaperWidth = wallpaperBmp.getWidth();
     		int scrollX = myHome.getInstance().getWorkspace().getScrollX();
     		
     		float offset = wallpaperWidth > width ? (count * width - wallpaperWidth) /
@@ -118,7 +132,7 @@ public class Screen extends LinearLayout implements DragController {
     		if(scrollX < 0)
     			x = 0;
 
-    		canvas.drawBitmap(bmp, x, (getBottom() - getTop() - bmp.getHeight()) / 2, defaultPaint);
+    		canvas.drawBitmap(wallpaperBmp, x, (getBottom() - getTop() - wallpaperBmp.getHeight()) / 2, defaultPaint);
     	}
     	
     	super.dispatchDraw(canvas);
@@ -137,14 +151,18 @@ public class Screen extends LinearLayout implements DragController {
 		
 		if(dragInProgress && dragViewBitmap != null)
 		{
+			Paint toUse = defaultPaint;
+			
 			Point estDropPosition = workspace.getCurrentDesktop().getEstDropPosition();
 			if(estDropPosition != null && !inDeletePosition(lastMovementEventX,
 											lastMovementEventY) && 
 				myHome.getInstance().getWorkspace().getOpenedFolder() == null)
 				canvas.drawBitmap(dragViewBitmap, estDropPosition.x,
 						estDropPosition.y, dragViewAlphaPaint);
+			else
+				toUse = dragViewDeletePaint;
 			
-			canvas.drawBitmap(dragViewBitmap, toX, toY, null);
+			canvas.drawBitmap(dragViewBitmap, toX, toY, toUse);
 		}
     	
     	int curDesktop = workspace.getCurrentDesktopNum();
@@ -171,12 +189,10 @@ public class Screen extends LinearLayout implements DragController {
     		else
     			rect = new RectF(posX, posY, posX + desktopDisplayWidth, posY + 8);
     		
-    		Log.d("myHome", "Drawing rect #"+i+" to "+rect);
-    		
     		if(i == curDesktop)
-    			canvas.drawRect(rect, whitePaint);
+    			canvas.drawRoundRect(rect, 4, 4, whitePaint);
     		else
-    			canvas.drawRect(rect, blackPaint);
+    			canvas.drawRoundRect(rect, 4, 4, blackPaint);
     	}
     }
     

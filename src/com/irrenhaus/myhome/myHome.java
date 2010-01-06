@@ -100,7 +100,6 @@ public class myHome extends Activity {
         WallpaperManager mgr = WallpaperManager.getInstance();
         
         mgr.setActivity(this);
-        mgr.get();
         
 		if(!AppsCache.getInstance().isLoadingDone())
 		{
