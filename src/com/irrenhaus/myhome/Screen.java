@@ -296,6 +296,8 @@ public class Screen extends LinearLayout implements DragController {
 	public void onDragBegin(DragSource src, View view, Object info) {
 		workspace.closeAllOpen();
 		
+		myHome.getInstance().getToolbar().showTrayIcon();
+		
 		Vibrator vibrator = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
 		vibrator.vibrate(50);
 		
@@ -332,6 +334,8 @@ public class Screen extends LinearLayout implements DragController {
 		dragView.setVisibility(VISIBLE);
 		
 		dragViewBitmap = null;
+		
+		myHome.getInstance().getToolbar().showButtons();
 		
 		if(inDeletePosition(lastMovementEventX, lastMovementEventY))
 		{

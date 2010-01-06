@@ -14,7 +14,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 public class Toolbar extends LinearLayout {
-	private Vector<View> toolbarButtons;
+	private Vector<View>	toolbarButtons;
+	private ImageView		trayIcon;
 	
 	public Toolbar(Context context) {
 		super(context);
@@ -93,17 +94,27 @@ public class Toolbar extends LinearLayout {
 		toolbarButtons.add(allAppsGrid);
 		toolbarButtons.add(myPlaces);
 		
-		drawUI();
+		showButtons();
+		
+		trayIcon = new ImageView(context);
+		trayIcon.setImageResource(R.drawable.tray_icon);
 	}
 	
-	private void drawUI()
+	public void showButtons()
 	{
+		removeAllViews();
 		for(View v: toolbarButtons)
 		{
 			v.setPadding(4, 4, 4, 4);
 			
 			addView(v);
 		}
+	}
+	
+	public void showTrayIcon()
+	{
+		removeAllViews();
+		addView(trayIcon);
 	}
 	
 }
