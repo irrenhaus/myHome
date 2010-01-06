@@ -31,11 +31,11 @@
 <item>12h</item>
 <item>24h</item>
 </string-array>
-<string-array name="prefs_wallpaper_changer_duration_values"><item>10</item>
-<item>30</item>
-<item>1</item>
-<item>6</item>
-<item>12</item>
-<item>24</item>
+<string-array name="prefs_wallpaper_changer_duration_values"><item>10m</item>
+<item>30m</item>
+<item>1h</item>
+<item>6h</item>
+<item>12h</item>
+<item>24h</item>
 </string-array>
 </resources>

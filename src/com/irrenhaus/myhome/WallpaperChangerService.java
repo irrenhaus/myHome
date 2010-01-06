@@ -52,6 +52,8 @@ public class WallpaperChangerService extends Service {
 				changeWallpaper();
 			}
 		}, 0, duration);
+		
+		Log.d("myHome", "WallpaperChangerService started with duration: "+Config.getString(Config.WALLPAPER_CHANGER_DURATION_KEY)+"("+duration+")");
 	}
 	
 	@Override
