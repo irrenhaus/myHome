@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent">
-<GridView android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1" android:id="@+id/wallpaperGallery" android:gravity="center" android:layout_gravity="center"/><TextView android:layout_height="fill_parent" android:layout_width="fill_parent" android:layout_weight="1" android:id="@+id/noImagesText" android:text="@string/wallpaper_chooser_no_images" android:visibility="gone"></TextView><LinearLayout android:id="@+id/LinearLayout01" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_width="fill_parent" android:gravity="center"><ImageView android:id="@+id/selectedView" android:layout_height="32dip" android:layout_width="32dip"></ImageView><Button android:layout_height="wrap_content" android:id="@+id/buttonOk" android:text="@string/dialog_button_ok" android:layout_width="128dip"></Button>
-<Button android:layout_height="wrap_content" android:layout_width="128dip" android:text="@string/dialog_button_cancel" android:id="@+id/buttonCancel"></Button>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical" android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
+	<GridView android:layout_width="fill_parent"
+		android:layout_height="fill_parent" android:layout_weight="1"
+		android:id="@+id/wallpaperGallery" android:gravity="center"
+		android:layout_gravity="center" />
+	<TextView android:layout_height="fill_parent"
+		android:layout_width="fill_parent" android:layout_weight="1"
+		android:id="@+id/noImagesText" android:text="@string/wallpaper_chooser_no_images"
+		android:visibility="gone"></TextView>
+	<LinearLayout android:id="@+id/LinearLayout01"
+		android:layout_height="wrap_content" android:orientation="horizontal"
+		android:layout_width="fill_parent" android:gravity="center">
+		<ImageView android:id="@+id/selectedView"
+			android:layout_height="32dip" android:layout_width="32dip"></ImageView>
+		<Button android:layout_height="wrap_content" android:id="@+id/buttonOk"
+			android:text="@string/dialog_button_ok" android:layout_width="128dip"></Button>
+		<Button android:layout_height="wrap_content"
+			android:layout_width="128dip" android:text="@string/dialog_button_cancel"
+			android:id="@+id/buttonCancel"></Button>
 
-</LinearLayout>
+	</LinearLayout>
 
 
 </LinearLayout>

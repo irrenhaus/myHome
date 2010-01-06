@@ -1,11 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-  xmlns:android="http://schemas.android.com/apk/res/android" android:title="@string/prefs_title">
-<PreferenceCategory android:title="@string/prefs_desktop_prefs"><ListPreference android:entryValues="@array/prefs_num_desktops_values" android:key="num_desktops" android:entries="@array/prefs_num_desktops_entries" android:title="@string/prefs_num_desktops_title"></ListPreference>
-<ListPreference android:entryValues="@array/prefs_default_desktop_num_values" android:key="default_desktop_num" android:entries="@array/prefs_default_desktop_num_entries" android:title="@string/prefs_default_desktop_num"></ListPreference>
-<CheckBoxPreference android:key="desktop_rotation" android:title="@string/prefs_desktop_rotation" android:summary="@string/prefs_desktop_rotation_summary" android:defaultValue="true"></CheckBoxPreference>
-</PreferenceCategory>
-<PreferenceCategory android:title="@string/prefs_toolbar_title"><CheckBoxPreference android:key="toolbar_show_caller_button" android:title="@string/prefs_toolbar_show_caller_button" android:defaultValue="true"></CheckBoxPreference>
-<CheckBoxPreference android:key="toolbar_show_contacts_button" android:title="@string/toolbar_show_contacts_button" android:defaultValue="true"></CheckBoxPreference>
-</PreferenceCategory>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+	android:title="@string/prefs_title">
+	<PreferenceCategory android:title="@string/prefs_desktop_prefs">
+		<ListPreference android:entryValues="@array/prefs_num_desktops_values"
+			android:key="num_desktops" android:entries="@array/prefs_num_desktops_entries"
+			android:title="@string/prefs_num_desktops_title"></ListPreference>
+		<ListPreference android:entryValues="@array/prefs_default_desktop_num_values"
+			android:key="default_desktop_num" android:entries="@array/prefs_default_desktop_num_entries"
+			android:title="@string/prefs_default_desktop_num"></ListPreference>
+		<CheckBoxPreference android:key="desktop_rotation"
+			android:title="@string/prefs_desktop_rotation" android:summary="@string/prefs_desktop_rotation_summary"
+			android:defaultValue="true"></CheckBoxPreference>
+	</PreferenceCategory>
+	<PreferenceCategory android:title="@string/prefs_toolbar_title">
+		<CheckBoxPreference android:key="toolbar_show_caller_button"
+			android:title="@string/prefs_toolbar_show_caller_button"
+			android:defaultValue="true"></CheckBoxPreference>
+		<CheckBoxPreference android:key="toolbar_show_contacts_button"
+			android:title="@string/toolbar_show_contacts_button"
+			android:defaultValue="true"></CheckBoxPreference>
+	</PreferenceCategory>
+	<PreferenceCategory android:title="@string/prefs_wallpaper_changer_title">
+		<CheckBoxPreference android:defaultValue="false"
+			android:title="@string/prefs_wallpaper_changer_active" android:key="wallpaper_changer_active"></CheckBoxPreference>
+		<ListPreference android:key="wallpaper_changer_duration"
+			android:title="@string/prefs_wallpaper_changer_duration"
+			android:entryValues="@array/prefs_wallpaper_changer_duration_values"
+			android:dependency="wallpaper_changer_active" android:entries="@array/prefs_wallpaper_changer_duration_entries"></ListPreference>
+		<com.threefiftynice.android.preference.ListPreferenceMultiSelect
+			android:defaultValue="#ALL#"
+			android:dialogTitle="@string/prefs_wallpaper_changer_backgrounds_dialog_title"
+			android:summary="@string/prefs_wallpaper_changer_backgrounds_summary"
+			android:key="wallpaper_changer_backgrounds" android:title="@string/wallpaper_changer_backgrounds_title"
+			android:dependency="wallpaper_changer_active" />
+	</PreferenceCategory>
 </PreferenceScreen>

@@ -66,6 +66,12 @@ public class WallpaperManager implements Runnable {
 		drawable = u;
 	}
 	
+	public void selectWallpaperPath(String path)
+	{
+		resource = false;
+		drawable = Drawable.createFromPath(path);
+	}
+	
 	public synchronized boolean isDone()
 	{
 		return done;

@@ -17,6 +17,9 @@ public class Config {
 	public static final String	NUM_DESKTOPS_KEY = "num_desktops";
 	public static final String	TOOLBAR_SHOW_CALLER_BUTTON = "toolbar_show_caller_button";
 	public static final String	TOOLBAR_SHOW_CONTACTS_BUTTON = "toolbar_show_contacts_button";
+	public static final String	WALLPAPER_CHANGER_ACTIVE_KEY = "wallpaper_changer_active";
+	public static final String	WALLPAPER_CHANGER_DURATION_KEY = "wallpaper_changer_duration";
+	public static final String	WALLPAPER_CHANGER_BACKGROUNDS_KEY = "wallpaper_changer_backgrounds";
 
 	public static final int		DEFAULT_DESKTOP_NUM		= 1;
 	public static final int		DEFAULT_NUM_DESKTOPS	= 3;
@@ -41,6 +44,15 @@ public class Config {
 		
 		values.put(TOOLBAR_SHOW_CONTACTS_BUTTON, true);
 		persist.put(TOOLBAR_SHOW_CONTACTS_BUTTON, true);
+		
+		values.put(WALLPAPER_CHANGER_ACTIVE_KEY, false);
+		persist.put(WALLPAPER_CHANGER_ACTIVE_KEY, true);
+		
+		values.put(WALLPAPER_CHANGER_DURATION_KEY, "10m");
+		persist.put(WALLPAPER_CHANGER_DURATION_KEY, true);
+		
+		values.put(WALLPAPER_CHANGER_BACKGROUNDS_KEY, "");
+		persist.put(WALLPAPER_CHANGER_BACKGROUNDS_KEY, true);
 		
 		SharedPreferences prefs = context.getSharedPreferences("config", 0);
 		

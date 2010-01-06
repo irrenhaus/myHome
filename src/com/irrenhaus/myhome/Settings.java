@@ -1,9 +1,13 @@
 package com.irrenhaus.myhome;
 
+import java.io.File;
+import java.util.Vector;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
@@ -11,9 +15,15 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.Preference.OnPreferenceChangeListener;
 
+import com.threefiftynice.android.preference.ListPreferenceMultiSelect;
+
 public class Settings extends PreferenceActivity {
 	private boolean restart = false;
 	private boolean reinitToolbar = false;
+	private boolean restartWallpaperChanger = false;
+	private Vector<String> wallpaperEntries;
+	private Vector<String> wallpaperValues;
+	protected Boolean startWallpaperChanger = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -29,7 +39,14 @@ public class Settings extends PreferenceActivity {
 		
 		CheckBoxPreference callerBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_CALLER_BUTTON);
 		CheckBoxPreference contactsBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_CONTACTS_BUTTON);
+		
 
+		CheckBoxPreference changerActive = (CheckBoxPreference)findPreference(Config.WALLPAPER_CHANGER_ACTIVE_KEY);
+		ListPreference changerDuration = (ListPreference)findPreference(Config.WALLPAPER_CHANGER_DURATION_KEY);
+		final ListPreferenceMultiSelect changerBackgrounds = (ListPreferenceMultiSelect)findPreference(Config.WALLPAPER_CHANGER_BACKGROUNDS_KEY);
+		
+		fillWallpaperChangerValues(changerBackgrounds);
+		
 		/*if(Config.getInt(Config.NUM_DESKTOPS_KEY) != -1)
 			numDesktops.setValueIndex(Config.getInt(Config.NUM_DESKTOPS_KEY) - 3);
 		if(Config.getInt(Config.DEFAULT_DESKTOP_NUM_KEY) != -1)
@@ -108,8 +125,96 @@ public class Settings extends PreferenceActivity {
 				return true;
 			}
 		});
+		
+		changerActive.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference,
+					Object newValue) {
+				Config.putBoolean(Config.WALLPAPER_CHANGER_ACTIVE_KEY, (Boolean)newValue);
+				
+				startWallpaperChanger = (Boolean)newValue;
+				
+				return true;
+			}
+		});
+		
+		changerDuration.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference,
+					Object newValue) {
+				Config.putString(Config.WALLPAPER_CHANGER_DURATION_KEY, (String)newValue);
+				
+				restartWallpaperChanger = true;
+				
+				return true;
+			}
+		});
+		
+		changerBackgrounds.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference,
+					Object newValue) {
+				
+				Config.putString(Config.WALLPAPER_CHANGER_BACKGROUNDS_KEY, ((StringBuffer)newValue).toString());
+				
+				restartWallpaperChanger = true;
+				
+				return true;
+			}
+		});
 	}
 	
+	private void fillWallpaperChangerValues(ListPreferenceMultiSelect changerBackgrounds) {
+		if(wallpaperEntries == null)
+			wallpaperEntries = new Vector<String>();
+		else
+			wallpaperEntries.clear();
+		
+		if(wallpaperValues == null)
+			wallpaperValues = new Vector<String>();
+		else
+			wallpaperValues.clear();
+		
+		loadImages();
+
+		changerBackgrounds.setEntries(wallpaperEntries.toArray(new String[0]));
+		changerBackgrounds.setEntryValues(wallpaperValues.toArray(new String[0]));
+	}
+	
+	public void loadImages()
+	{
+		File dir = new File("/sdcard/myHome/wallpaper/");
+		
+		if(!dir.exists())
+		{
+			return;
+		}
+		
+		walkDir(dir);
+	}
+	
+	private void walkDir(File dir)
+	{
+		String[] files = dir.list();
+		
+		for(int i = 0; i < files.length; i++)
+		{
+			File file = new File(dir.getAbsolutePath()+"/"+files[i]);
+			
+			if(file.isDirectory())
+				walkDir(file);
+			else
+			{
+				String name = file.getName();
+				if(name.endsWith("png") || name.endsWith("jpg") || name.endsWith("jpeg"))
+				{
+					if(!name.contains("_small"))
+					{
+						wallpaperEntries.add(file.getName());
+						wallpaperValues.add(file.getAbsolutePath());
+					}
+				}
+			}
+		}
+	}
+
 	@Override
 	public void onStop()
 	{
@@ -121,6 +226,20 @@ public class Settings extends PreferenceActivity {
 		{
 			myHome.getInstance().getToolbar().initToolbar();
 			myHome.getInstance().getToolbar().invalidate();
+		}
+		
+		if(startWallpaperChanger)
+		{
+			myHome.getInstance().startWallpaperChangerService();
+		}
+		else
+		{
+			myHome.getInstance().stopWallpaperChangerService();
+		}
+		
+		if(restartWallpaperChanger)
+		{
+			myHome.getInstance().restartWallpaperChangerService();
 		}
 			
 		finish();

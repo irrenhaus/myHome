@@ -2,7 +2,9 @@ package com.irrenhaus.myhome;
 
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -16,6 +18,7 @@ public class WallpaperChanger extends Activity {
 	private GridView	gallery;
 	private TextView	warningView;
 	private Drawable	selected;
+	private String			selectedUri;
 	private ImageView	selectedView;
 	
 	@Override
@@ -36,6 +39,8 @@ public class WallpaperChanger extends Activity {
 		
 		gallery.setAdapter(adapter);
 		
+		gallery.setColumnWidth(300);
+		
 		adapter.loadImages();
 		
 		if(adapter.getCount() <= 0)
@@ -46,15 +51,20 @@ public class WallpaperChanger extends Activity {
 		gallery.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
+				Uri uri = (Uri) arg1.getTag();
+				
+				String tmp = uri.toString();
+				tmp = tmp.replaceAll("_small", "");
+				
 				selected = ((ImageView)arg1).getDrawable();
+				selectedUri = tmp;
 				selectedView.setImageDrawable(selected);
 			}
 		});
 
 		buttonOk.setOnClickListener(new OnClickListener() {
 			public void onClick(View arg0) {
-				
-				WallpaperManager.getInstance().selectWallpaperDrawable(selected);
+				WallpaperManager.getInstance().selectWallpaperPath(selectedUri);
 				WallpaperManager.getInstance().set();
 				
 				finish();

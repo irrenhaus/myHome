@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="prefs_wallpaper_changer_duration">Switch duration</string>
+    <string name="prefs_wallpaper_changer_active">Activate</string>
+    <string name="prefs_wallpaper_changer_title">Wallpaper Changer</string>
     <string name="prefs_desktop_rotation_summary">Switch from the last desktop to the first and reverse</string>
     <string name="prefs_desktop_rotation">Desktop rotation</string>
     <string name="toolbar_show_contacts_button">Show Contacts button</string>
@@ -44,4 +47,7 @@
 <string name="dialog_restart_title">Restarting application</string>
 <string name="dialog_restart_message">When changing this preferences, the application has to be re-started.</string>
 <string name="menu_entry_restart_desktop">Restart</string>
+<string name="prefs_wallpaper_changer_backgrounds_dialog_title">Wallpapers</string>
+<string name="prefs_wallpaper_changer_backgrounds_summary">Selected wallpapers to switch between</string>
+<string name="wallpaper_changer_backgrounds_title">Wallpaper selection</string>
 </resources>

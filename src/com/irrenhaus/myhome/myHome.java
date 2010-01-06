@@ -118,6 +118,10 @@ public class myHome extends Activity {
 		IntentFilter intentFilter = new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED);
 		
 		registerReceiver(wallpaperReceiver, intentFilter);
+		
+		WallpaperChangerService.setContext(getApplicationContext());
+		if(Config.getBoolean(Config.WALLPAPER_CHANGER_ACTIVE_KEY, false))
+			startWallpaperChangerService();
     }
     
     @Override
@@ -126,6 +130,7 @@ public class myHome extends Activity {
     	super.onDestroy();
     	
     	unregisterReceiver(wallpaperReceiver);
+    	stopWallpaperChangerService();
     }
 
 	@Override
@@ -761,5 +766,18 @@ public class myHome extends Activity {
 
 	public Toolbar getToolbar() {
 		return toolbar;
+	}
+
+	public void startWallpaperChangerService() {
+		startService(new Intent(getApplicationContext(), WallpaperChangerService.class));
+	}
+
+	public void stopWallpaperChangerService() {
+		stopService(new Intent(getApplicationContext(), WallpaperChangerService.class));
+	}
+
+	public void restartWallpaperChangerService() {
+		stopWallpaperChangerService();
+		startWallpaperChangerService();
 	}
 }

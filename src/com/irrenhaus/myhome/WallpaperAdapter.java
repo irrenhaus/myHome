@@ -52,8 +52,10 @@ public class WallpaperAdapter extends BaseAdapter {
 				String name = file.getName();
 				if(name.endsWith("png") || name.endsWith("jpg") || name.endsWith("jpeg"))
 				{
-					wallpaperImages.add(Uri.parse(file.getAbsolutePath()));
-					Log.d("myHome", "Adding wallpaper "+file.getAbsolutePath());
+					if(name.contains("_small"))
+					{
+						wallpaperImages.add(Uri.parse(file.getAbsolutePath()));
+					}
 				}
 			}
 		}
@@ -77,6 +79,7 @@ public class WallpaperAdapter extends BaseAdapter {
 	public View getView(int arg0, View arg1, ViewGroup arg2) {
 		ImageView view = new ImageView(context);
 		view.setImageURI(wallpaperImages.get(arg0));
+		view.setTag(wallpaperImages.get(arg0));
 		view.setScaleType(ImageView.ScaleType.FIT_XY);
 		view.setLayoutParams(new GridView.LayoutParams(300, 256));
 		view.setPadding(15, 15, 15, 15);
