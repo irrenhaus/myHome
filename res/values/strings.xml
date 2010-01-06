@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="wallpaper_changer_service_label">myHome Wallpaper Changer Service</string>
     <string name="prefs_wallpaper_changer_duration">Switch duration</string>
     <string name="prefs_wallpaper_changer_active">Activate</string>
     <string name="prefs_wallpaper_changer_title">Wallpaper Changer</string>

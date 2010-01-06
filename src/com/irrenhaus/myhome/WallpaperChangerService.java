@@ -7,6 +7,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 
 import com.threefiftynice.android.preference.ListPreferenceMultiSelect;
 
@@ -61,6 +62,8 @@ public class WallpaperChangerService extends Service {
 	
 	public void changeWallpaper()
 	{
+		Log.d("myHome", "WallpaperChangerService: Switching wallpaper");
+		
 		int which = ((int) (Math.rint(Math.random())) % wallpapers.length);
 		
 		WallpaperManager.getInstance().selectWallpaperPath(wallpapers[which]);
