@@ -134,13 +134,16 @@ public class WallpaperManager implements Runnable {
 		}
 		else
 		{
-			try {
-				activity.setWallpaper(((BitmapDrawable)drawable).getBitmap());
-			} catch (IOException e) {
-				done = true;
-				e.printStackTrace();
+			if(drawable != null)
+			{
+				try {
+					activity.setWallpaper(((BitmapDrawable)drawable).getBitmap());
+				} catch (IOException e) {
+					done = true;
+					e.printStackTrace();
+				}
+				drawable = null;
 			}
-			drawable = null;
 		}
 		
 		wallpaperChanged = true;

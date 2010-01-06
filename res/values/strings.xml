@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="prefs_wallpaper_changer_change_on_start_summary">Change the wallpaper immediately when service starts.</string>
+    <string name="prefs_wallpaper_changer_change_on_start">Change on start</string>
     <string name="wallpaper_changer_service_label">myHome Wallpaper Changer Service</string>
     <string name="prefs_wallpaper_changer_duration">Switch duration</string>
     <string name="prefs_wallpaper_changer_active">Activate</string>
@@ -51,4 +53,5 @@
 <string name="prefs_wallpaper_changer_backgrounds_dialog_title">Wallpapers</string>
 <string name="prefs_wallpaper_changer_backgrounds_summary">Selected wallpapers to switch between</string>
 <string name="wallpaper_changer_backgrounds_title">Wallpaper selection</string>
+<string name="menu_entry_switch_background">Switch Wallpaper</string>
 </resources>

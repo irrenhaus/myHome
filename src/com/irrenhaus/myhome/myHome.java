@@ -64,6 +64,7 @@ public class myHome extends Activity {
 	private static final int			MENU_ENTRY_ADD_PLACE = R.string.menu_entry_add_place;
 	private static final int			MENU_ENTRY_RESTORE = R.string.menu_entry_restore_desktop;
 	private static final int			MENU_ENTRY_RESTART = R.string.menu_entry_restart_desktop;
+	private static final int			MENU_ENTRY_SWITCH_WALLPAPER = R.string.menu_entry_switch_background;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -275,6 +276,19 @@ public class myHome extends Activity {
    								return true;
    							}
       					 });
+    	
+    	if(Config.getBoolean(Config.WALLPAPER_CHANGER_ACTIVE_KEY, false))
+    	{
+	    	menu.add(1, MENU_ENTRY_SWITCH_WALLPAPER, ContextMenu.NONE,
+	      			 res.getString(MENU_ENTRY_SWITCH_WALLPAPER)).setOnMenuItemClickListener(
+	      					 new OnMenuItemClickListener() {
+	   							public boolean onMenuItemClick(MenuItem arg0) {
+	   								myHome.this.sendBroadcast(new Intent(WallpaperChangerService.SWITCH_WALLPAPER_INTENT));
+	   								
+	   								return true;
+	   							}
+	      					 });
+    	}
 
     	menu.add(2, MENU_ENTRY_SETTINGS,
     			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS)).setIntent(intent);

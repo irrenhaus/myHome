@@ -4,11 +4,12 @@ import java.util.Vector;
 
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.provider.Contacts;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -16,6 +17,8 @@ import android.widget.LinearLayout;
 public class Toolbar extends LinearLayout {
 	private Vector<View>	toolbarButtons;
 	private ImageView		trayIcon;
+	private RectF			bgRect;
+	private Paint			bgPaint;
 	
 	public Toolbar(Context context) {
 		super(context);
@@ -43,7 +46,7 @@ public class Toolbar extends LinearLayout {
 		Button myPlaces = new Button(context);
 		myPlaces.setBackgroundResource(R.drawable.my_places_toolbar_button);
 		
-		if(Config.getBoolean(Config.TOOLBAR_SHOW_CALLER_BUTTON, true))
+		if(Config.getBoolean(Config.TOOLBAR_SHOW_CALLER_BUTTON_KEY, true))
 		{
 			Button caller = new Button(context);
 			caller.setBackgroundResource(R.drawable.caller_toolbar_button);
@@ -56,7 +59,7 @@ public class Toolbar extends LinearLayout {
 			toolbarButtons.add(caller);
 		}
 		
-		if(Config.getBoolean(Config.TOOLBAR_SHOW_CONTACTS_BUTTON, true))
+		if(Config.getBoolean(Config.TOOLBAR_SHOW_CONTACTS_BUTTON_KEY, true))
 		{
 			Button contacts = new Button(context);
 			contacts.setBackgroundResource(R.drawable.contacts_toolbar_button);
@@ -98,6 +101,11 @@ public class Toolbar extends LinearLayout {
 		
 		trayIcon = new ImageView(context);
 		trayIcon.setImageResource(R.drawable.tray_icon);
+		
+		bgPaint = new Paint();
+		bgPaint.setARGB(192, 0, 0, 0);
+		
+		setPadding(4, 4, 4, 4);
 	}
 	
 	public void showButtons()
@@ -105,8 +113,6 @@ public class Toolbar extends LinearLayout {
 		removeAllViews();
 		for(View v: toolbarButtons)
 		{
-			v.setPadding(4, 4, 4, 4);
-			
 			addView(v);
 		}
 	}
@@ -115,6 +121,47 @@ public class Toolbar extends LinearLayout {
 	{
 		removeAllViews();
 		addView(trayIcon);
+	}
+	
+	@Override
+	public void onSizeChanged(int w, int h, int oldw, int oldh)
+	{
+		super.onSizeChanged(w, h, oldw, oldh);
+		
+		if(w > h) //land
+		{
+			bgRect = new RectF(0, 0, getWidth(), 0);
+			for(int i = 0; i < getChildCount(); i++)
+			{
+				View child = getChildAt(i);
+				int y = child.getMeasuredHeight();
+				
+				if(bgRect.bottom < y)
+					bgRect.bottom = y;
+			}
+			bgRect.bottom += this.getPaddingBottom();
+		}
+		else //port
+		{
+			bgRect = new RectF(0, 0, 0, getHeight());
+			for(int i = 0; i < getChildCount(); i++)
+			{
+				View child = getChildAt(i);
+				int x = child.getMeasuredWidth();
+				
+				if(bgRect.right < x)
+					bgRect.right = x;
+			}
+			bgRect.right += this.getPaddingRight();
+		}
+	}
+	
+	@Override
+    public void dispatchDraw(Canvas canvas)
+	{
+		canvas.drawRoundRect(bgRect, 6, 6, bgPaint);
+		
+		super.dispatchDraw(canvas);
 	}
 	
 }

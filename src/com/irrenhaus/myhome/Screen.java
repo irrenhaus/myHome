@@ -100,6 +100,7 @@ public class Screen extends LinearLayout implements DragController {
 		whitePaint.setStyle(Style.FILL);
 		
     	wallpaperMgr = WallpaperManager.getInstance();
+    	wallpaperChanged();
 	}
 	
 	public void wallpaperChanged()
