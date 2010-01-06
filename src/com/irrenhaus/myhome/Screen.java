@@ -10,6 +10,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.RectF;
+import android.graphics.Paint.Style;
 import android.net.Uri;
 import android.os.Vibrator;
 import android.util.AttributeSet;
@@ -49,6 +51,10 @@ public class Screen extends LinearLayout implements DragController {
 	private int					lastMovementEventY;
 
 	private Paint				defaultPaint = new Paint();
+
+	private Paint whitePaint;
+
+	private Paint blackPaint;
 	
 	public Screen(Context context) {
 		super(context);
@@ -76,6 +82,14 @@ public class Screen extends LinearLayout implements DragController {
 		
 		dragViewAlphaPaint = new Paint();
 		dragViewAlphaPaint.setARGB(128, 66, 66, 66);
+
+		blackPaint = new Paint();
+		blackPaint.setARGB(192, 0, 0, 0);
+		blackPaint.setStyle(Style.FILL);
+		
+		whitePaint = new Paint();
+		whitePaint.setARGB(192, 255, 255, 255);
+		whitePaint.setStyle(Style.FILL);
 	}
 	
 	@Override
@@ -132,6 +146,38 @@ public class Screen extends LinearLayout implements DragController {
 			
 			canvas.drawBitmap(dragViewBitmap, toX, toY, null);
 		}
+    	
+    	int curDesktop = workspace.getCurrentDesktopNum();
+    	int numDesktops = workspace.getDesktopCount();
+    	
+    	int desktopDisplayWidth = (getRight() - getLeft()) / numDesktops;
+    	int posY = getHeight() - 8;
+    	
+    	boolean land = getWidth() > getHeight();
+    	
+    	if(land)
+    	{
+    		posY = getRight() - 8;
+    		desktopDisplayWidth = getHeight() / numDesktops;
+    	}
+    	
+    	for(int i = 0; i < numDesktops; i++)
+    	{
+    		int posX = desktopDisplayWidth * i;
+    		RectF rect = null;
+    		
+    		if(land)
+    			rect = new RectF(posY, posX, posY + 8, posX + desktopDisplayWidth);
+    		else
+    			rect = new RectF(posX, posY, posX + desktopDisplayWidth, posY + 8);
+    		
+    		Log.d("myHome", "Drawing rect #"+i+" to "+rect);
+    		
+    		if(i == curDesktop)
+    			canvas.drawRect(rect, whitePaint);
+    		else
+    			canvas.drawRect(rect, blackPaint);
+    	}
     }
     
     @Override

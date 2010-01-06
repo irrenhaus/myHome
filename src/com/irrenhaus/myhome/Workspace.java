@@ -69,6 +69,9 @@ public class Workspace extends ViewGroup
         desktopView = new DesktopView[numDesktops];
         
         currentDesktop = Config.getInt(Config.CURRENT_DESKTOP_NUM_KEY);
+
+        Log.d("myHome", "numDesktops: "+numDesktops);
+        Log.d("myHome", "defDesktop: "+currentDesktop);
         
         for(int i = 0; i < numDesktops; i++)
         {
@@ -109,8 +112,18 @@ public class Workspace extends ViewGroup
 	{
 		if(num < 0 || num >= numDesktops)
 		{
-			scrollTo(currentDesktop * getWidth(), 0);
-			return;
+			if(!Config.getBoolean(Config.DESKTOP_ROTATION_KEY, true))
+			{
+				scrollTo(currentDesktop * getWidth(), 0);
+				return;
+			}
+			else
+			{
+				if(num < 0)
+					num = numDesktops-1;
+				else
+					num = 0;
+			}
 		}
 		
 		currentDesktop = num;

@@ -6,6 +6,7 @@ import java.util.Set;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 public class Config {
 	private static final HashMap<String, Object> values = new HashMap<String, Object>();
@@ -14,11 +15,14 @@ public class Config {
 	public static final String	DEFAULT_DESKTOP_NUM_KEY = "default_desktop_num";
 	public static final String	CURRENT_DESKTOP_NUM_KEY = "current_desktop_num";
 	public static final String	NUM_DESKTOPS_KEY = "num_desktops";
+	public static final String	TOOLBAR_SHOW_CALLER_BUTTON = "toolbar_show_caller_button";
+	public static final String	TOOLBAR_SHOW_CONTACTS_BUTTON = "toolbar_show_contacts_button";
 
 	public static final int		DEFAULT_DESKTOP_NUM		= 1;
 	public static final int		DEFAULT_NUM_DESKTOPS	= 3;
 	
 	private static boolean		config_altered = false;
+	public static String 		DESKTOP_ROTATION_KEY = "desktop_rotation";
 	
 	public static void readConfiguration(Context context)
 	{
@@ -28,8 +32,15 @@ public class Config {
 		
 		values.put(NUM_DESKTOPS_KEY, DEFAULT_NUM_DESKTOPS);
 		persist.put(NUM_DESKTOPS_KEY, true);
-
-		values.put(CURRENT_DESKTOP_NUM_KEY, DEFAULT_DESKTOP_NUM);
+		
+		values.put(DESKTOP_ROTATION_KEY, true);
+		persist.put(DESKTOP_ROTATION_KEY, true);
+		
+		values.put(TOOLBAR_SHOW_CALLER_BUTTON, true);
+		persist.put(TOOLBAR_SHOW_CALLER_BUTTON, true);
+		
+		values.put(TOOLBAR_SHOW_CONTACTS_BUTTON, true);
+		persist.put(TOOLBAR_SHOW_CONTACTS_BUTTON, true);
 		
 		SharedPreferences prefs = context.getSharedPreferences("config", 0);
 		
@@ -39,9 +50,14 @@ public class Config {
 		
 		for(String key: keys)
 		{
+			Log.d("myHome", "Prev value key "+key+": "+values.get(key));
+			Log.d("myHome", "Stored value key "+key+": "+all.get(key));
 			values.put(key, all.get(key));
 			persist.put(key, true);
+			Log.d("myHome", "After value key "+key+": "+values.get(key));
 		}
+
+		values.put(CURRENT_DESKTOP_NUM_KEY, Config.getInt(DEFAULT_DESKTOP_NUM_KEY));
 	}
 	
 	public static void saveConfiguration(Context context)
@@ -57,7 +73,7 @@ public class Config {
 		
 		for(String key: keys)
 		{
-			if(persist.get(key))
+			if(persist.get(key) != null && persist.get(key))
 			{
 				Object value = values.get(key);
 				

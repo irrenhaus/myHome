@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="prefs_desktop_rotation_summary">Switch from the last desktop to the first and reverse</string>
+    <string name="prefs_desktop_rotation">Desktop rotation</string>
+    <string name="toolbar_show_contacts_button">Show Contacts button</string>
+    <string name="prefs_toolbar_show_caller_button">Show Call button</string>
+    <string name="prefs_toolbar_title">Toolbar</string>
     <string name="prefs_default_desktop_num">Default desktop</string>
     <string name="prefs_num_desktops_title">Number of desktops</string>
     <string name="prefs_desktop_prefs">Desktop Settings</string>
@@ -36,4 +41,7 @@
 <string name="dialog_title_restore_desktop">Restoring desktop</string>
 <string name="dialog_message_restore_desktop">Are you shure you want to restore your desktop?\nThis will remove all items from your desktop and replace them with the ones saved each time this app is in background.</string>
 <string name="menu_entry_myhome_settings">myHome Settings</string>
+<string name="dialog_restart_title">Restarting application</string>
+<string name="dialog_restart_message">When changing this preferences, the application has to be re-started.</string>
+<string name="menu_entry_restart_desktop">Restart</string>
 </resources>

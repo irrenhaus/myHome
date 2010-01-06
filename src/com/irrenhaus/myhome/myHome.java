@@ -42,6 +42,7 @@ import com.irrenhaus.myhome.CellLayout.LayoutParams;
 public class myHome extends Activity {
 	private Workspace					workspace = null;
 	private Screen						screen = null;
+	private Toolbar						toolbar = null;
 
 	private static final int			PICK_WIDGET = 1;
 	public  static final int			ADD_WIDGET = 2;
@@ -65,6 +66,7 @@ public class myHome extends Activity {
 	private static final int			MENU_ENTRY_MYHOME_SETTINGS = R.string.menu_entry_myhome_settings;
 	private static final int			MENU_ENTRY_ADD_PLACE = R.string.menu_entry_add_place;
 	private static final int			MENU_ENTRY_RESTORE = R.string.menu_entry_restore_desktop;
+	private static final int			MENU_ENTRY_RESTART = R.string.menu_entry_restart_desktop;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -90,27 +92,8 @@ public class myHome extends Activity {
         
         screen = (Screen)findViewById(R.id.screen);
         
-        ImageView appsGridButton = (ImageView)findViewById(R.id.openAllAppsGridButton);
-        appsGridButton.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				if(workspace.isAppsGridOpened())
-					workspace.closeTrayView(null);
-				else
-					workspace.openAllAppsGrid();
-			}
-        });
-        
-        ImageView myPlacesButton = (ImageView)findViewById(R.id.openMyPlacesButton);
-        myPlacesButton.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-				if(workspace.isMyPlacesOpened())
-					workspace.closeTrayView(null);
-				else if(workspace.getOpenedFolder() != null && !workspace.isFolderOpenedInScreen())
-					workspace.closeFolder();
-				else
-					workspace.openMyPlaces();
-			}
-        });
+        toolbar = (Toolbar)findViewById(R.id.toolbar);
+        toolbar.initToolbar();
 
         AppsCache.getInstance().addLoadingListener(workspace);
         
@@ -263,6 +246,15 @@ public class myHome extends Activity {
 								return true;
 							}
    					 });
+    	
+    	menu.add(1, MENU_ENTRY_RESTART, ContextMenu.NONE,
+      			 res.getString(MENU_ENTRY_RESTART)).setOnMenuItemClickListener(
+      					 new OnMenuItemClickListener() {
+   							public boolean onMenuItemClick(MenuItem arg0) {
+   								myHome.this.finish();
+   								return true;
+   							}
+      					 });
 
     	menu.add(2, MENU_ENTRY_SETTINGS,
     			ContextMenu.NONE, res.getString(MENU_ENTRY_SETTINGS)).setIntent(intent);
@@ -750,5 +742,9 @@ public class myHome extends Activity {
 
 	public Screen getScreen() {
 		return screen;
+	}
+
+	public Toolbar getToolbar() {
+		return toolbar;
 	}
 }

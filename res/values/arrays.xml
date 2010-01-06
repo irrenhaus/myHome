@@ -5,11 +5,11 @@
 <item>5</item>
 <item>6</item>
 </string-array>
-<integer-array name="prefs_num_desktops_values"><item>3</item>
+<string-array name="prefs_num_desktops_values"><item>3</item>
 <item>4</item>
 <item>5</item>
 <item>6</item>
-</integer-array>
+</string-array>
 <string-array name="prefs_default_desktop_num_entries"><item>1</item>
 <item>2</item>
 <item>3</item>
@@ -17,11 +17,11 @@
 <item>5</item>
 <item>6</item>
 </string-array>
-<integer-array name="prefs_default_desktop_num_values"><item>0</item>
+<string-array name="prefs_default_desktop_num_values"><item>0</item>
 <item>1</item>
 <item>2</item>
 <item>3</item>
 <item>4</item>
 <item>5</item>
-</integer-array>
+</string-array>
 </resources>
