@@ -100,20 +100,10 @@ public class myHome extends Activity {
         
         toolbar = (Toolbar)findViewById(R.id.toolbar);
         toolbar.initToolbar();
-
-        AppsCache.getInstance().addLoadingListener(workspace);
         
         WallpaperManager mgr = WallpaperManager.getInstance();
         
         mgr.setActivity(this);
-        
-		if(!AppsCache.getInstance().isLoadingDone())
-		{
-			Toast.makeText(this, R.string.loading_please_wait, Toast.LENGTH_SHORT).show();
-			AppsCache.getInstance().start();
-		}
-		else
-			AppsCache.getInstance().sendLoadingDone();
 		
 		AppWidgetManager.getInstance(myHome.this);
 		
@@ -139,6 +129,8 @@ public class myHome extends Activity {
     	
     	unregisterReceiver(wallpaperReceiver);
     	stopWallpaperChangerService();
+    	
+    	workspace.onStop();
     }
 
 	@Override

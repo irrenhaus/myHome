@@ -23,6 +23,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.AdapterView;
 import android.widget.Scroller;
+import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
@@ -33,35 +34,35 @@ public class Workspace extends ViewGroup
 					   implements ApplicationLoadingListener,
 					   			  OnClickListener, OnLongClickListener,
 					   			  OnItemClickListener, OnItemLongClickListener{
-	private DesktopView[] 		desktopView = null;
-	private int					currentDesktop;
-	private int					numDesktops;
+	private static DesktopView[]	desktopView = null;
+	private int						currentDesktop;
+	private int						numDesktops;
 	
-	private AppsGrid			allAppsGrid = null;
-	private MyPlacesGrid		myPlacesGrid = null;
+	private AppsGrid				allAppsGrid = null;
+	private MyPlacesGrid			myPlacesGrid = null;
 	
-	private MyPlacesAdapter		myPlacesAdapter = null;
+	private MyPlacesAdapter			myPlacesAdapter = null;
 	
-	private boolean				appsGridOpened = false;
+	private boolean					appsGridOpened = false;
 	
-	private myHome				home = null;
+	private myHome					home = null;
 	
-	private	Folder				openedFolder;
-	private boolean				folderOpenedInScreen = false;
-	private boolean				myPlacesOpened = false;
-	private boolean				firstLayout = false;
-	private	boolean				trayViewOpened = false;
+	private	Folder					openedFolder;
+	private boolean					folderOpenedInScreen = false;
+	private boolean					myPlacesOpened = false;
+	private boolean					firstLayout = false;
+	private	boolean					trayViewOpened = false;
 	
-	private Animation			fadeInAnimation;
-	private Animation			fadeOutAnimation;
-	private Animation			desktopItemClickAnimation;
+	private Animation				fadeInAnimation;
+	private Animation				fadeOutAnimation;
+	private Animation				desktopItemClickAnimation;
 	
-	private TrayView			trayView;
+	private TrayView				trayView;
 	
-	private DesktopSwitcher		desktopSwitcher = null;
-	private boolean 			desktopSwitcherOpened = false;
+	private DesktopSwitcher			desktopSwitcher = null;
+	private boolean 				desktopSwitcherOpened = false;
 
-	private static final float	scrollDuration = 150;
+	private static final float		scrollDuration = 150;
 	
 	public Workspace(Context context) {
 		super(context);
@@ -79,11 +80,19 @@ public class Workspace extends ViewGroup
         
         currentDesktop = Config.getInt(Config.CURRENT_DESKTOP_NUM_KEY);
 		
-        desktopView = new DesktopView[numDesktops];
+        if(desktopView == null)
+        	desktopView = new DesktopView[numDesktops];
+        else if(desktopView.length != numDesktops)
+        {
+        	desktopView = null;
+        	desktopView = new DesktopView[numDesktops];
+        }
         
         for(int i = 0; i < numDesktops; i++)
         {
-        	desktopView[i] = new DesktopView(home);
+        	if(desktopView[i] == null)
+        		desktopView[i] = new DesktopView(home);
+        	
             desktopView[i].setDragController(myHome.getInstance().getScreen());
             desktopView[i].setDesktopNumber(i);
 
@@ -119,6 +128,33 @@ public class Workspace extends ViewGroup
 		desktopSwitcher = new DesktopSwitcher(home);
 		
 		//setPadding(4, 4, 4, 4);
+	}
+	
+	public void onStop()
+	{
+		removeAllViews();
+	}
+	
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh)
+	{
+		super.onSizeChanged(w, h, oldw, oldh);
+		
+		if(firstLayout)
+		{
+			scrollTo(getCurrentDesktopNum() * getWidth(), 0);
+			firstLayout = false;
+		}
+
+        AppsCache.getInstance().addLoadingListener(this);
+		
+		if(!AppsCache.getInstance().isLoadingDone())
+		{
+			Toast.makeText(home, R.string.loading_please_wait, Toast.LENGTH_SHORT).show();
+			AppsCache.getInstance().start();
+		}
+		else
+			AppsCache.getInstance().sendLoadingDone();
 	}
 	
 	public void startScroll(int sx, int sy, int dx, int dy)
@@ -757,18 +793,6 @@ public class Workspace extends ViewGroup
 		for(int i = 0; i < numDesktops; i++)
 		{	
 			getDesktop(i).removeDesktopFolder(f);
-		}
-	}
-	
-	@Override
-	protected void onSizeChanged(int w, int h, int oldw, int oldh)
-	{
-		super.onSizeChanged(w, h, oldw, oldh);
-		
-		if(firstLayout)
-		{
-			scrollTo(getCurrentDesktopNum() * getWidth(), 0);
-			firstLayout = false;
 		}
 	}
 	
