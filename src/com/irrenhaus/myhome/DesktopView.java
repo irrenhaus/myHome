@@ -288,7 +288,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 			{
 				ApplicationInfo i = (ApplicationInfo)info;
 				
-				myHome.getInstance().storeAddShortcutToPlace(i.intent.toURI(), openedFolder);
+				myHome.getInstance().storeAddShortcutToPlace(i.intentUri, openedFolder);
 				
 				openedFolder.getAdapter().reload();
 				openedFolder.getAdapter().notifyDataSetChanged();
@@ -374,6 +374,9 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	{
 		dragPosition.x = position.x;
 		dragPosition.y = position.y;
+				
+		estDropPosition.x = position.x;
+		estDropPosition.y = position.y;
 	}
 
 	@Override

@@ -52,9 +52,10 @@ public class AppsCache implements Runnable {
 	
 	public ApplicationInfo searchByIntent(Intent intent)
 	{
+		String intentUri = intent.toURI();
 		for(int i = 0; i < getAppCount(); i++)
 		{
-			if(applicationInfos.get(i).intent.toURI().equals(intent.toURI()))
+			if(applicationInfos.get(i).intentUri.equals(intentUri))
 				return applicationInfos.get(i);
 		}
 		return null;
@@ -138,6 +139,7 @@ public class AppsCache implements Runnable {
             									  resolve.activityInfo.name));
         	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
         	info.intent = intent;
+        	info.intentUri = intent.toURI();
 
             info.icon = Utilities.createIconThumbnail(resolve.loadIcon(pkgMgr), context);
         	
@@ -161,6 +163,7 @@ public class AppsCache implements Runnable {
 		public String	name = null;
 		public Drawable icon = null;
 		public Intent	intent = null;
+		public String	intentUri = null;
 		public boolean	filtered = false;
 		public boolean	isFolder = false;
 		
@@ -177,7 +180,7 @@ public class AppsCache implements Runnable {
 		{
 			return ((name.equals(info.name)) &&
 					((intent != null && info.intent != null &&
-							(intent.toURI().equals(info.intent.toURI()))) ||
+							(intentUri.equals(info.intentUri))) ||
 					  (intent == null && info.intent == null)) &&
 					(isFolder == info.isFolder));
 		}

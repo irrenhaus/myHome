@@ -25,6 +25,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -37,6 +38,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
+import com.irrenhaus.myhome.WidgetCache.WidgetReadyListener;
 
 public class myHome extends Activity {
 	private Workspace					workspace = null;
@@ -80,6 +82,8 @@ public class myHome extends Activity {
         
         setContentView(R.layout.main);
         
+        //Debug.startMethodTracing("myHome");
+        
         Config.readConfiguration(this);
         
         processInstanceState(savedInstanceState);
@@ -116,7 +120,6 @@ public class myHome extends Activity {
 		wallpaperReceiver = new BroadcastReceiver() {
 			public void onReceive(Context context, Intent intent) {
 				screen.wallpaperChanged();
-				Log.d("myHome", "Received :)");
 			}
 		};
 		
@@ -146,6 +149,8 @@ public class myHome extends Activity {
         Config.saveConfiguration(this);
     	
     	storeToSDCard();
+    	
+    	//Debug.stopMethodTracing();
     }
     
     public static myHome getInstance()
@@ -434,9 +439,17 @@ public class myHome extends Activity {
 						WidgetCache.getInstance().deleteAppWidgetId(widgetid);
 					else
 					{
-						WidgetCache.getInstance().widgetReady(widgetid);
-						
-						workspace.getCurrentDesktop().addAppWidget(true, widgetid);
+						WidgetCache.getInstance().widgetReady(widgetid, new WidgetReadyListener() {
+							@Override
+							public void ready(final int widgetid) {
+								runOnUiThread(new Runnable() {
+									synchronized public void run()
+									{
+										workspace.getCurrentDesktop().addAppWidget(true, widgetid);
+									}
+								});
+							}
+						});
 					}
 				}
 		    	else if(requestCode == ADD_WIDGET)

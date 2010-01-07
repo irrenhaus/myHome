@@ -32,6 +32,7 @@ public class DesktopItem {
 	
 	private ApplicationInfo			applicationInfo;
 	private Intent					launchIntent;
+	private String					launchIntentUri;
 	
 	private AppWidgetProviderInfo	appWidgetInfo;
 	private AppWidgetHostView		appWidgetView;
@@ -149,6 +150,7 @@ public class DesktopItem {
 
 	public void setLaunchIntent(Intent launchIntent) {
 		this.launchIntent = launchIntent;
+		this.launchIntentUri = launchIntent.toURI();
 	}
 
 	public Context getContext() {
@@ -197,7 +199,7 @@ public class DesktopItem {
 		if(type == APP_WIDGET)
 			intent = String.valueOf(getAppWidgetId());
 		if(type == APPLICATION_SHORTCUT)
-			intent = launchIntent.toURI();
+			intent = launchIntentUri;
 		if(type == USER_FOLDER)
 			intent = folder.getTitle();
 		

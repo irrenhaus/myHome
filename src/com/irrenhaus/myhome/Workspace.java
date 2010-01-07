@@ -11,6 +11,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
@@ -26,6 +27,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
+import com.irrenhaus.myhome.WidgetCache.WidgetReadyListener;
 
 public class Workspace extends ViewGroup
 					   implements ApplicationLoadingListener,
@@ -599,7 +601,6 @@ public class Workspace extends ViewGroup
 		
     	Runnable run = new Runnable() {
 			public void run() {
-				
 				MyHomeDB homeDb = new MyHomeDB(home);
 		    	SQLiteDatabase db = homeDb.getReadableDatabase();
 		    	
@@ -643,6 +644,7 @@ public class Workspace extends ViewGroup
 				    					Point to = new Point(params.cellX, params.cellY);
 				    					
 				    					d.addDesktopShortcut(true, to, null, info);
+						    			Log.d("myHome", "AddDesktopShortcut called");
 									}
 		    					});
 		    				}
@@ -666,6 +668,7 @@ public class Workspace extends ViewGroup
 				    					Point to = new Point(params.cellX, params.cellY);
 				    					
 				    					d.addDesktopFolder(true, to, null, info);
+						    			Log.d("myHome", "AddDesktopFolder called");
 									}
 		    					});
 		    				}
@@ -680,11 +683,21 @@ public class Workspace extends ViewGroup
 				    			if(desktop >= 0 && desktop < numDesktops)
 								{
 									final DesktopView d = getDesktop(desktop);
-					    			Point to = new Point(params.cellX, params.cellY);
-					    			Point size = new Point(params.cellHSpan, params.cellVSpan);
+					    			final Point to = new Point(params.cellX, params.cellY);
+					    			final Point size = new Point(params.cellHSpan, params.cellVSpan);
 					    			
-					    			WidgetCache.getInstance().widgetReady(widgetid);
-					    			d.addAppWidget(false, widgetid, to, size);
+					    			WidgetCache.getInstance().widgetReady(widgetid, new WidgetReadyListener() {
+										@Override
+										synchronized public void ready(final int widgetid) {
+											home.runOnUiThread(new Runnable() {
+												public void run()
+												{
+									    			d.addAppWidget(false, widgetid, to, size);
+												}
+											});
+										}
+									});
+					    			Log.d("myHome", "WidgetReady called");
 								}
 							}
 						});
@@ -711,11 +724,6 @@ public class Workspace extends ViewGroup
 			}
 		});
 		loadWorkspaceDatabase();
-		/*home.runOnUiThread(new Runnable() {
-			public void run() {
-				Toast.makeText(home, R.string.loading_done, Toast.LENGTH_SHORT).show();
-			}
-		});*/
 	}
 
 	public DesktopView getCurrentDesktop() {

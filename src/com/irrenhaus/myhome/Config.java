@@ -70,11 +70,8 @@ public class Config {
 		
 		for(String key: keys)
 		{
-			Log.d("myHome", "Prev value key "+key+": "+values.get(key));
-			Log.d("myHome", "Stored value key "+key+": "+all.get(key));
 			values.put(key, all.get(key));
 			persist.put(key, true);
-			Log.d("myHome", "After value key "+key+": "+values.get(key));
 		}
 
 		values.put(CURRENT_DESKTOP_NUM_KEY, Config.getInt(DEFAULT_DESKTOP_NUM_KEY));

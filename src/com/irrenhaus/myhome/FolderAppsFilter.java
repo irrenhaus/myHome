@@ -24,7 +24,7 @@ public class FolderAppsFilter implements AppsFilter {
 	public boolean filterApplicationInfo(ApplicationInfo info) {
 		for(int i = 0; i < containingIntents.length; i++)
 		{
-			if(containingIntents[i].equals(info.intent.toURI()))
+			if(containingIntents[i].equals(info.intentUri))
 				return true;
 		}
 		

@@ -467,7 +467,7 @@ public class Screen extends LinearLayout implements DragController {
 			else if(grid.getParent() instanceof Folder)
 			{
 				myHome.getInstance().storeRemoveShortcutFromPlace(
-										((ApplicationInfo)info).intent.toURI(),
+										((ApplicationInfo)info).intentUri,
 										((Folder)grid.getParent()));
 				((Folder)grid.getParent()).getAdapter().reload();
 				((Folder)grid.getParent()).getAdapter().notifyDataSetChanged();

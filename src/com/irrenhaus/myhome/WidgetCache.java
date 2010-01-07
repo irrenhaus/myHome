@@ -64,7 +64,7 @@ public class WidgetCache {
 		}
 	}
 	
-	public static WidgetCache getInstance()
+	synchronized public static WidgetCache getInstance()
 	{
 		if(instance == null)
 			instance = new WidgetCache();
@@ -72,7 +72,7 @@ public class WidgetCache {
 		return instance;
 	}
 	
-	public int getWidgetPosForId(int id)
+	synchronized public int getWidgetPosForId(int id)
 	{
 		int size = widgetIds.size();
 		
@@ -86,39 +86,52 @@ public class WidgetCache {
 		return -1;
 	}
 
-	public void deleteAppWidgetId(int widgetid) {
+	synchronized public void deleteAppWidgetId(int widgetid) {
 		host.deleteAppWidgetId(widgetid);
 	}
-
-	public void widgetReady(int widgetid) {
-		for(int id: widgetIds)
-		{
-			if(id == widgetid)
-				return;
-		}
-		
-		MyHomeAppWidgetHostView view = null;
-		AppWidgetProviderInfo info = null;
-		
-		widgetIds.add(widgetid);
-		
-		info = manager.getAppWidgetInfo(widgetid);
-		
-		view = (MyHomeAppWidgetHostView) host.createView(context, widgetid, info);
-		
-		widgetProviderInfos.add(info);
-		widgetViews.add(view);
+	
+	synchronized private void add(Integer id, Object info, Object view)
+	{
+		widgetIds.add(id);
+		widgetProviderInfos.add((AppWidgetProviderInfo) info);
+		widgetViews.add((MyHomeAppWidgetHostView) view);
 	}
 
-	public MyHomeAppWidgetHostView getAppWidgetView(int pos) {
+	synchronized public void widgetReady(final int widgetid, final WidgetReadyListener listener) {
+		new Thread(new Runnable() {
+			synchronized public void run() {
+				for(int id: widgetIds)
+				{
+					if(id == widgetid)
+					{
+						listener.ready(widgetid);
+						return;
+					}
+				}
+				
+				MyHomeAppWidgetHostView view = null;
+				AppWidgetProviderInfo info = null;
+				
+				info = manager.getAppWidgetInfo(widgetid);
+				
+				view = (MyHomeAppWidgetHostView) host.createView(context, widgetid, info);
+				
+				add(widgetid, info, view);
+				
+				listener.ready(widgetid);
+			}
+		}).start();
+	}
+
+	synchronized public MyHomeAppWidgetHostView getAppWidgetView(int pos) {
 		return widgetViews.get(pos);
 	}
 
-	public AppWidgetProviderInfo getAppWidgetInfo(int pos) {
+	synchronized public AppWidgetProviderInfo getAppWidgetInfo(int pos) {
 		return widgetProviderInfos.get(pos);
 	}
 
-	public boolean startWidgetConfigure(int pos) {
+	synchronized public boolean startWidgetConfigure(int pos) {
 		AppWidgetProviderInfo info = getAppWidgetInfo(pos);
 		int id = widgetIds.get(pos);
 		
@@ -135,11 +148,15 @@ public class WidgetCache {
 		return true;
 	}
 
-	public void setLayoutParams(int pos, LayoutParams params) {
+	synchronized public void setLayoutParams(int pos, LayoutParams params) {
 		getAppWidgetView(pos).setLayoutParams(params);
 	}
 
-	public int allocateAppWidgetId() {
+	synchronized public int allocateAppWidgetId() {
 		return host.allocateAppWidgetId();
+	}
+	
+	public interface WidgetReadyListener {
+		public void ready(int widgetid);
 	}
 }
