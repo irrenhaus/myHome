@@ -187,7 +187,7 @@ public class Screen extends LinearLayout implements DragController {
     	if(land)
     	{
     		posY = getRight() - 8;
-    		desktopDisplayWidth = getHeight() / numDesktops;
+    		desktopDisplayWidth = (getBottom() - getTop()) / numDesktops;
     	}
     	
     	for(int i = 0; i < numDesktops; i++)

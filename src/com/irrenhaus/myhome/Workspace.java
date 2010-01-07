@@ -11,7 +11,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
@@ -19,8 +18,8 @@ import android.view.View.OnLongClickListener;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.Scroller;
 import android.widget.AdapterView.OnItemClickListener;
@@ -117,7 +116,7 @@ public class Workspace extends ViewGroup
 		
 		desktopSwitcher = new DesktopSwitcher(home);
 		
-		setPadding(4, 4, 4, 4);
+		//setPadding(4, 4, 4, 4);
 	}
 	
 	public void startScroll(int sx, int sy, int dx, int dy)
@@ -128,7 +127,7 @@ public class Workspace extends ViewGroup
 		if(Math.abs(dx) > getWidth() || Math.abs(dy) > getWidth())
 			i = new AccelerateDecelerateInterpolator();
 		else
-			i = new LinearInterpolator();
+			i = new DecelerateInterpolator();
 		
 		final Scroller scroller = new Scroller(home, i);
 		final Timer timer = new Timer();

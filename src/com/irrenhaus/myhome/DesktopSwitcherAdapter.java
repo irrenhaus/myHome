@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 public class DesktopSwitcherAdapter extends BaseAdapter {
 	private Vector<Bitmap>	desktops;
@@ -51,6 +52,7 @@ public class DesktopSwitcherAdapter extends BaseAdapter {
 		ImageButton btn = null;
 		
 		btn = new ImageButton(context);
+		btn.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 		btn.setImageBitmap(desktops.get(pos));
 		btn.setOnClickListener(new OnClickListener() {
 			public void onClick(View arg0) {
@@ -65,7 +67,7 @@ public class DesktopSwitcherAdapter extends BaseAdapter {
 		return btn;
 	}
 	
-	public void init(Workspace w, int d, int width, int height)
+	public void init(Workspace w, int d, int width, int height, int cols)
 	{
 		workspace = w;
 		desktopCount = d;
@@ -90,7 +92,7 @@ public class DesktopSwitcherAdapter extends BaseAdapter {
 			
 			Log.d("myHome", "cw: "+cacheWidth+", ch: "+cacheHeight+", mod: "+mod);
 			
-			int bmpWidth = (cacheWidth - 100) / 4;
+			int bmpWidth = cacheWidth / cols;
 			int bmpHeight = (int)(bmpWidth * mod);
 			
 			Bitmap bmp = Bitmap.createBitmap(bmpWidth, bmpHeight, cache.getConfig());

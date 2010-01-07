@@ -19,6 +19,7 @@ public class DesktopSwitcher extends LinearLayout {
 	
 	private Workspace				workspace;
 	private int						desktopCount;
+	private int columnCount;
 
 	public DesktopSwitcher(Context context) {
 		super(context);
@@ -43,11 +44,11 @@ public class DesktopSwitcher extends LinearLayout {
 		workspace = myHome.getInstance().getWorkspace();
 		desktopCount = workspace.getDesktopCount();
 		
-		int cols = desktopCount;
-		if(cols > 4)
-			cols = 4;
+		columnCount = desktopCount;
+		if(columnCount > 4)
+			columnCount = 4;
 		
-		grid.setNumColumns(cols);
+		grid.setNumColumns(columnCount);
 		grid.setAdapter(adapter);
 		
 		addView(grid);
@@ -59,7 +60,7 @@ public class DesktopSwitcher extends LinearLayout {
 
 	public void init(int w, int h) {
 		
-		adapter.init(workspace, desktopCount, w, h);
+		adapter.init(workspace, desktopCount, w, h, columnCount);
 		
 		adapter.notifyDataSetChanged();
 	}

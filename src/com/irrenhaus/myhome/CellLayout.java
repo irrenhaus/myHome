@@ -91,7 +91,39 @@ public class CellLayout extends ViewGroup {
         }
     }
 
-    @Override
+    public int getLongAxisStartPadding() {
+		return mLongAxisStartPadding;
+	}
+
+	public void setLongAxisStartPadding(int mLongAxisStartPadding) {
+		this.mLongAxisStartPadding = mLongAxisStartPadding;
+	}
+
+	public int getLongAxisEndPadding() {
+		return mLongAxisEndPadding;
+	}
+
+	public void setLongAxisEndPadding(int mLongAxisEndPadding) {
+		this.mLongAxisEndPadding = mLongAxisEndPadding;
+	}
+
+	public int getmhortAxisStartPadding() {
+		return mShortAxisStartPadding;
+	}
+
+	public void setShortAxisStartPadding(int mShortAxisStartPadding) {
+		this.mShortAxisStartPadding = mShortAxisStartPadding;
+	}
+
+	public int getShortAxisEndPadding() {
+		return mShortAxisEndPadding;
+	}
+
+	public void setShortAxisEndPadding(int mShortAxisEndPadding) {
+		this.mShortAxisEndPadding = mShortAxisEndPadding;
+	}
+
+	@Override
     public void cancelLongPress() {
         super.cancelLongPress();
 

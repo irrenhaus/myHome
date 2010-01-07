@@ -5,15 +5,11 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
@@ -71,6 +67,7 @@ public class DesktopItem {
 			if(type == APPLICATION_SHORTCUT || type == USER_FOLDER)
 			{
 				v.setText(title);
+				v.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
 				
 				v.setCompoundDrawables(null,
 														  Utilities.createIconThumbnail(icon,
@@ -79,8 +76,6 @@ public class DesktopItem {
 														  null);
 
 				v.setSingleLine();
-
-				v.setGravity(Gravity.CENTER);
 				
 				v.setLayoutParams(layoutParams);
 				

@@ -61,8 +61,19 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
 		super.onSizeChanged(w, h, oldw, oldh);
 
-		setCellWidth((getWidth()/4));
-		setCellHeight((getHeight()/4));
+        final float scale = getContext().getResources().getDisplayMetrics().density;
+
+		float cw = 80 * scale;
+		float ch = 100 * scale;
+		
+		if(w > h) //land
+		{
+			cw = 106 * scale;
+			ch = 73 * scale;
+		}
+		
+		setCellWidth((int) cw);
+		setCellHeight((int) ch);
 		
 		setLongAxisCells(NUM_COLUMNS_DESKTOPVIEW);
 		setShortAxisCells(NUM_COLUMNS_DESKTOPVIEW);
@@ -194,6 +205,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 			item.getView().setOnClickListener(onClickListener);
 			item.getView().setOnLongClickListener(onLongClickListener);
+			item.getView().setLayoutParams(params);
 			
 			this.addView(item.getView());
 			
@@ -236,6 +248,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 			item.getView().setOnClickListener(onClickListener);
 			item.getView().setOnLongClickListener(onLongClickListener);
+			item.getView().setLayoutParams(params);
 			
 			this.addView(item.getView());
 			
