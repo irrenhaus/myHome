@@ -354,7 +354,7 @@ public class Screen extends LinearLayout implements DragController {
 		
 		workspace.getCurrentDesktop().onIncomingDrag(dragView, dragInfo);
 		dragSource.onDrag(dragView, dragInfo);
-		workspace.getCurrentDesktop().onDragMovement(dragView, dragInfo, eventPoint);
+		workspace.getCurrentDesktop().setInitialDragPosition(eventPoint);
 		invalidate();
 		
 		view.setVisibility(GONE);

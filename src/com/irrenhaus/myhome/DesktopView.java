@@ -368,12 +368,18 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	public void setDragController(DragController ctrl) {
 		dragCtrl = ctrl;
 	}
+	
+	@Override
+	public void setInitialDragPosition(Point position)
+	{
+		dragPosition.x = position.x;
+		dragPosition.y = position.y;
+	}
 
 	@Override
 	public void onDragMovement(View view, Object info, Point position) {
 		dragPosition.x = position.x;
 		dragPosition.y = position.y;
-			
 		
 		if(myHome.getInstance().getWorkspace().getOpenedFolder() == null)
 		{
