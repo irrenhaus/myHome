@@ -192,4 +192,8 @@ public class Config {
 		
 		config_altered = true;
 	}
+
+	public static boolean isInitialized() {
+		return values != null && values.size() > 0 && !config_altered;
+	}
 }

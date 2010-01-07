@@ -3,6 +3,7 @@ package com.irrenhaus.myhome;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -21,6 +22,8 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -65,6 +68,7 @@ public class myHome extends Activity {
 	private static final int			MENU_ENTRY_RESTORE = R.string.menu_entry_restore_desktop;
 	private static final int			MENU_ENTRY_RESTART = R.string.menu_entry_restart_desktop;
 	private static final int			MENU_ENTRY_SWITCH_WALLPAPER = R.string.menu_entry_switch_background;
+	private static final int			MENU_ENTRY_SCREENSHOT = R.string.menu_entry_screenshot;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -296,11 +300,53 @@ public class myHome extends Activity {
     	menu.add(2, MENU_ENTRY_MYHOME_SETTINGS,
     			ContextMenu.NONE, res.getString(MENU_ENTRY_MYHOME_SETTINGS)).setIntent(
     					new Intent(this, Settings.class));
+
+    	menu.add(3, MENU_ENTRY_SCREENSHOT,
+    			ContextMenu.NONE, res.getString(MENU_ENTRY_SCREENSHOT)).setOnMenuItemClickListener(
+     					 new OnMenuItemClickListener() {
+    							public boolean onMenuItemClick(MenuItem arg0) {
+    								takeScreenshot();
+    								return true;
+    							}
+       					 });
     	
     	return true;
     }
     
-    public void openDatabase()
+    protected void takeScreenshot() {
+		try {
+			File file = new File("/sdcard/myHome/screenshot.png");
+			
+			if(!file.exists())
+				file.createNewFile();
+			
+			if(!file.canWrite())
+				throw new IOException();
+			
+			FileOutputStream fOut = new FileOutputStream(file);
+			
+			Bitmap bmp = Bitmap.createBitmap(screen.getWidth(), screen.getHeight(), Bitmap.Config.ARGB_8888);
+			Canvas draw = new Canvas(bmp);
+			screen.draw(draw);
+			
+			bmp.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+			
+			fOut.flush();
+			fOut.close();
+			
+			draw = null;
+			bmp.recycle();
+			bmp = null;
+		} catch(IOException e) {
+			Toast.makeText(this, R.string.screenshot_error, Toast.LENGTH_SHORT).show();
+			e.printStackTrace();
+			return;
+		}
+		
+		Toast.makeText(this, R.string.screenshot_success, Toast.LENGTH_SHORT).show();
+	}
+
+	public void openDatabase()
     {
     	if(homeDb == null)
     		homeDb = new MyHomeDB(this);

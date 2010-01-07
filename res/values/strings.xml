@@ -55,4 +55,7 @@
 <string name="prefs_wallpaper_changer_backgrounds_summary">Selected wallpapers to switch between</string>
 <string name="wallpaper_changer_backgrounds_title">Wallpaper selection</string>
 <string name="menu_entry_switch_background">Switch Wallpaper</string>
+<string name="menu_entry_screenshot">Screenshot</string>
+<string name="screenshot_error">Sorry, I could not take screenshot.</string>
+<string name="screenshot_success">Screenshot is at /sdcard/myHome/screenshot.png.</string>
 </resources>
