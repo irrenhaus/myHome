@@ -39,6 +39,8 @@ public class Screen extends LinearLayout implements DragController {
 
 	private int					clickX;
 	private int					clickY;
+	private int					startScrollX;
+	private int					startScrollY;
 	private int					desktopToSet = 0;
 	
 	private Workspace			workspace;
@@ -175,6 +177,7 @@ public class Screen extends LinearLayout implements DragController {
     	
     	int curDesktop = workspace.getCurrentDesktopNum();
     	int numDesktops = workspace.getDesktopCount();
+    	int desktopWidth = (getRight() - getLeft());
     	
     	int desktopDisplayWidth = (getRight() - getLeft()) / numDesktops;
     	int posY = getHeight() - 8;
@@ -197,11 +200,17 @@ public class Screen extends LinearLayout implements DragController {
     		else
     			rect = new RectF(posX, posY, posX + desktopDisplayWidth, posY + 8);
     		
-    		if(i == curDesktop)
-    			canvas.drawRoundRect(rect, 4, 4, whitePaint);
-    		else
-    			canvas.drawRoundRect(rect, 4, 4, blackPaint);
+    		canvas.drawRoundRect(rect, 4, 4, blackPaint);
     	}
+    	RectF rect = null;
+    	float num = numDesktops - 1;
+    	int posX = (int)(((num * desktopDisplayWidth) / (num * desktopWidth)) * workspace.getScrollX());
+    	
+		if(land)
+			rect = new RectF(posY, posX, posY + 8, posX + desktopDisplayWidth);
+		else
+			rect = new RectF(posX, posY, posX + desktopDisplayWidth, posY + 8);
+		canvas.drawRoundRect(rect, 4, 4, whitePaint);
     }
     
     @Override
@@ -268,12 +277,15 @@ public class Screen extends LinearLayout implements DragController {
 			{
 				workspace.cancelAllLongPresses();
 				desktopChangeInProgress = true;
+				startScrollX = workspace.getScrollX();
+				startScrollY = workspace.getScrollY();
 			}
 			
 			if(desktopChangeInProgress)
 			{
 				performDesktopChange(clickX, clickY,
-									(int)event.getX(), (int)event.getY());
+									(int)event.getX(), (int)event.getY(),
+									startScrollX, startScrollY);
 				return true;
 			}
 		}
@@ -287,7 +299,7 @@ public class Screen extends LinearLayout implements DragController {
 		return (dragInProgress || super.dispatchTouchEvent(event));
 	}
 
-	private void performDesktopChange(int startX, int startY, int x, int y)
+	private void performDesktopChange(int startX, int startY, int x, int y, int scrollX, int scrollY)
 	{
 		if(myHome.getInstance().isDiamondLayout())
 		{
@@ -297,10 +309,7 @@ public class Screen extends LinearLayout implements DragController {
 		{
 			int difference = startX - x;
 			
-			if(difference < 0)
-				workspace.scrollTo((int) ((workspace.getCurrentDesktopNum() * getWidth())+difference), 0);
-			else
-				workspace.scrollTo((int) ((workspace.getCurrentDesktopNum() * getWidth())-(difference*-1)), 0);
+			workspace.scrollTo(scrollX+difference, 0);
 			
 			if(Math.abs(difference) > getWidth()*0.6)
 			{

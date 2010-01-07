@@ -19,11 +19,12 @@
 		<CheckBoxPreference android:key="toolbar_show_contacts_button"
 			android:title="@string/toolbar_show_contacts_button"
 			android:defaultValue="true"></CheckBoxPreference>
-	</PreferenceCategory>
+	<CheckBoxPreference android:key="toolbar_show_desktop_switcher_button" android:defaultValue="true" android:title="@string/prefs_toolbar_show_desktop_switcher_button"></CheckBoxPreference>
+</PreferenceCategory>
 	<PreferenceCategory android:title="@string/prefs_wallpaper_changer_title">
 		<CheckBoxPreference android:defaultValue="false"
 			android:title="@string/prefs_wallpaper_changer_active" android:key="wallpaper_changer_active"></CheckBoxPreference>
-		<CheckBoxPreference android:key="wallpaper_changer_change_on_start" android:dependency="wallpaper_changer_active" android:defaultValue="true" android:title="@string/prefs_wallpaper_changer_change_on_start" android:summary="@string/prefs_wallpaper_changer_change_on_start_summary"></CheckBoxPreference><ListPreference android:key="wallpaper_changer_duration"
+		<CheckBoxPreference android:key="wallpaper_changer_change_on_start" android:dependency="wallpaper_changer_active" android:title="@string/prefs_wallpaper_changer_change_on_start" android:summary="@string/prefs_wallpaper_changer_change_on_start_summary" android:defaultValue="false"></CheckBoxPreference><ListPreference android:key="wallpaper_changer_duration"
 			android:title="@string/prefs_wallpaper_changer_duration"
 			android:entryValues="@array/prefs_wallpaper_changer_duration_values"
 			android:dependency="wallpaper_changer_active" android:entries="@array/prefs_wallpaper_changer_duration_entries"></ListPreference>

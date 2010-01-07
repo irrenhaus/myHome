@@ -4,11 +4,13 @@
 <item>4</item>
 <item>5</item>
 <item>6</item>
+<item>7</item>
 </string-array>
 <string-array name="prefs_num_desktops_values"><item>3</item>
 <item>4</item>
 <item>5</item>
 <item>6</item>
+<item>7</item>
 </string-array>
 <string-array name="prefs_default_desktop_num_entries"><item>1</item>
 <item>2</item>
@@ -16,6 +18,7 @@
 <item>4</item>
 <item>5</item>
 <item>6</item>
+<item>7</item>
 </string-array>
 <string-array name="prefs_default_desktop_num_values"><item>0</item>
 <item>1</item>
@@ -23,6 +26,7 @@
 <item>3</item>
 <item>4</item>
 <item>5</item>
+<item>6</item>
 </string-array>
 <string-array name="prefs_wallpaper_changer_duration_entries"><item>10m</item>
 <item>30m</item>

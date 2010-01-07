@@ -97,6 +97,22 @@ public class Toolbar extends LinearLayout {
 		toolbarButtons.add(allAppsGrid);
 		toolbarButtons.add(myPlaces);
 		
+		if(Config.getBoolean(Config.TOOLBAR_SHOW_DESKTOP_SWITCHER_BUTTON_KEY, true))
+		{
+			Button desktopSwitcher = new Button(context);
+			desktopSwitcher.setBackgroundResource(R.drawable.desktop_switcher_toolbar_button);
+			desktopSwitcher.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					if(workspace.isDesktopSwitcherOpened())
+						workspace.closeDesktopSwitcher(null);
+					else
+						workspace.openDesktopSwitcher();
+				}
+	        });
+
+			toolbarButtons.add(desktopSwitcher);
+		}
+		
 		showButtons();
 		
 		trayIcon = new ImageView(context);

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="prefs_toolbar_show_desktop_switcher_button">Show DesktopSwitcher button</string>
     <string name="prefs_wallpaper_changer_change_on_start_summary">Change the wallpaper immediately when service starts.</string>
     <string name="prefs_wallpaper_changer_change_on_start">Change on start</string>
     <string name="wallpaper_changer_service_label">myHome Wallpaper Changer Service</string>

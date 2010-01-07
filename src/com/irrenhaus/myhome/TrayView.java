@@ -83,13 +83,9 @@ public class TrayView extends LinearLayout {
 		final AppsGrid oldGridView = curGrid;
 		
 		if(grid == ALL_APPS_GRID)
-		{
 			curGrid = allAppsGrid;
-		}
 		else if(grid == MY_PLACES_GRID)
-		{
 			curGrid = myPlacesGrid;
-		}
 		
 		if(oldGridView != null)
 		{
@@ -120,7 +116,7 @@ public class TrayView extends LinearLayout {
 			curGrid.startAnimation(fadeInAnimation);
 		}
 	}
-	
+
 	@Override
 	public void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
 	{
@@ -161,6 +157,8 @@ public class TrayView extends LinearLayout {
 	public void setGrid(int grid) {
 		final AppsGrid oldGridView = curGrid;
 		
+		curGrid = null;
+		
 		if(grid == ALL_APPS_GRID)
 			curGrid = allAppsGrid;
 		else if(grid == MY_PLACES_GRID)
@@ -171,6 +169,7 @@ public class TrayView extends LinearLayout {
 		else if(openedFolder != null)
 			myHome.getInstance().getWorkspace().closeFolderWithoutTrayView();
 		
-		curGrid.setVisibility(View.VISIBLE);
+		if(curGrid != null)
+			curGrid.setVisibility(View.VISIBLE);
 	}
 }

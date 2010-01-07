@@ -39,6 +39,7 @@ public class Settings extends PreferenceActivity {
 		
 		CheckBoxPreference callerBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_CALLER_BUTTON_KEY);
 		CheckBoxPreference contactsBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_CONTACTS_BUTTON_KEY);
+		CheckBoxPreference switcherBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_DESKTOP_SWITCHER_BUTTON_KEY);
 		
 
 		CheckBoxPreference changerActive = (CheckBoxPreference)findPreference(Config.WALLPAPER_CHANGER_ACTIVE_KEY);
@@ -111,6 +112,17 @@ public class Settings extends PreferenceActivity {
 			public boolean onPreferenceChange(Preference preference,
 					Object newValue) {
 				Config.putBoolean(Config.TOOLBAR_SHOW_CONTACTS_BUTTON_KEY, (Boolean)newValue);
+				
+				reinitToolbar = true;
+				
+				return true;
+			}
+		});
+		
+		switcherBtn.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference,
+					Object newValue) {
+				Config.putBoolean(Config.TOOLBAR_SHOW_DESKTOP_SWITCHER_BUTTON_KEY, (Boolean)newValue);
 				
 				reinitToolbar = true;
 				
@@ -252,6 +264,8 @@ public class Settings extends PreferenceActivity {
 			myHome.getInstance().restartWallpaperChangerService();
 		}
 			
+		Config.saveConfiguration(myHome.getInstance());
+		
 		finish();
 	}
 }

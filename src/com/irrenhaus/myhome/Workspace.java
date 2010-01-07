@@ -1,24 +1,28 @@
 package com.irrenhaus.myhome;
 
 import java.net.URISyntaxException;
+import java.util.Timer;
+import java.util.TimerTask;
 
-import android.appwidget.AppWidgetManager;
-import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Point;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
-import android.widget.Toast;
+import android.widget.Scroller;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 
@@ -50,7 +54,13 @@ public class Workspace extends ViewGroup
 	private Animation			fadeInAnimation;
 	private Animation			fadeOutAnimation;
 	private Animation			desktopItemClickAnimation;
+	
 	private TrayView			trayView;
+	
+	private DesktopSwitcher		desktopSwitcher = null;
+	private boolean 			desktopSwitcherOpened = false;
+
+	private static final float	scrollDuration = 150;
 	
 	public Workspace(Context context) {
 		super(context);
@@ -65,13 +75,10 @@ public class Workspace extends ViewGroup
 		this.home = home;
 		
 		numDesktops = Config.getInt(Config.NUM_DESKTOPS_KEY);
-		
-        desktopView = new DesktopView[numDesktops];
         
         currentDesktop = Config.getInt(Config.CURRENT_DESKTOP_NUM_KEY);
-
-        Log.d("myHome", "numDesktops: "+numDesktops);
-        Log.d("myHome", "defDesktop: "+currentDesktop);
+		
+        desktopView = new DesktopView[numDesktops];
         
         for(int i = 0; i < numDesktops; i++)
         {
@@ -81,6 +88,7 @@ public class Workspace extends ViewGroup
 
             desktopView[i].setOnClickListener(this);
             desktopView[i].setOnLongClickListener(this);
+            desktopView[i].setDrawingCacheEnabled(false);
             
             addView(desktopView[i]);
         }
@@ -107,32 +115,92 @@ public class Workspace extends ViewGroup
         
         trayView = new TrayView(home, allAppsGrid, myPlacesGrid);
 		
+		desktopSwitcher = new DesktopSwitcher(home);
+		
 		setPadding(4, 4, 4, 4);
+	}
+	
+	public void startScroll(int sx, int sy, int dx, int dy)
+	{
+		final Screen screen = myHome.getInstance().getScreen();
+		int duration = Math.abs((int)((scrollDuration / (float)getWidth()) * (float)dx));
+		Interpolator i = null;
+		if(Math.abs(dx) > getWidth() || Math.abs(dy) > getWidth())
+			i = new AccelerateDecelerateInterpolator();
+		else
+			i = new LinearInterpolator();
+		
+		final Scroller scroller = new Scroller(home, i);
+		final Timer timer = new Timer();
+		timer.scheduleAtFixedRate(new TimerTask() {
+			public void run() {
+				if(!scroller.computeScrollOffset())
+				{
+					home.runOnUiThread(new Runnable() {
+						public void run() {
+							scrollTo(scroller.getFinalX(), scroller.getFinalY());
+							screen.invalidate();
+						}
+					});
+					this.cancel();
+					timer.cancel();
+					timer.purge();
+				}
+				else
+				{
+					home.runOnUiThread(new Runnable() {
+						public void run() {
+							scrollTo(scroller.getCurrX(), scroller.getCurrY());
+							screen.invalidate();
+						}
+					});
+				}
+			}
+		}, 0, 30);
+		scroller.startScroll(sx, sy, dx, 0, duration);
 	}
 	
 	public void gotoDesktop(int num)
 	{
-		if(num < 0 || num >= numDesktops)
+		if(myHome.getInstance().isDiamondLayout())
 		{
-			if(!Config.getBoolean(Config.DESKTOP_ROTATION_KEY, true))
+			
+		}
+		else
+		{
+			if(num < 0 || num >= numDesktops)
 			{
-				scrollTo(currentDesktop * getWidth(), 0);
-				return;
-			}
-			else
-			{
-				if(num < 0)
-					num = numDesktops-1;
+				if(!Config.getBoolean(Config.DESKTOP_ROTATION_KEY, true))
+				{
+					int sx = getScrollX();
+					int sy = getScrollY();
+					int dx = (currentDesktop * getWidth()) - sx;
+					
+					startScroll(sx, sy, dx, 0);
+					//scrollTo(currentDesktop * getWidth(), 0);
+					return;
+				}
 				else
-					num = 0;
+				{
+					if(num < 0)
+						num = numDesktops-1;
+					else
+						num = 0;
+				}
 			}
+			
+			currentDesktop = num;
+			
+			int sx = getScrollX();
+			int sy = getScrollY();
+			int dx = (currentDesktop * getWidth()) - sx;
+
+			startScroll(sx, sy, dx, 0);
+			
+			Config.putInt(Config.CURRENT_DESKTOP_NUM_KEY, num);
 		}
 		
-		currentDesktop = num;
-		
-		scrollTo(currentDesktop * getWidth(), 0);
-		
-		Config.putInt(Config.CURRENT_DESKTOP_NUM_KEY, num);
+		home.getScreen().invalidate();
 	}
 	
 	public void setDesktop(int num)
@@ -149,6 +217,8 @@ public class Workspace extends ViewGroup
 	{
 		if(trayViewOpened)
 			closeTrayView(null);
+		if(desktopSwitcherOpened)
+			closeDesktopSwitcher(null);
 	}
 	
 	public void closeAllOpenFor(Runnable run)
@@ -160,8 +230,45 @@ public class Workspace extends ViewGroup
 			ran = true;
 		}
 		
+		if(desktopSwitcherOpened)
+		{
+			closeDesktopSwitcher(run);
+			ran = true;
+		}
+		
 		if(!ran)
 			run.run();
+	}
+	
+	public void openDesktopSwitcher()
+	{
+		closeAllOpen();
+		
+		RectF size = new RectF();
+		getCurrentDesktop().cellToRect(0, 0, 4, 4, size);
+		desktopSwitcher.init((int)size.width(), (int)size.height());
+	
+		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
+		getCurrentDesktop().addView(desktopSwitcher, -1, lp);
+		
+		desktopSwitcher.startAnimation(fadeInAnimation);
+		desktopSwitcherOpened = true;
+		invalidate();
+	}
+	
+	public void closeDesktopSwitcher(final Runnable run)
+	{
+		desktopSwitcher.setDoOnAnimationEnd(new Runnable() {
+			public void run() {
+		    	getCurrentDesktop().removeView(desktopSwitcher);
+				desktopSwitcherOpened = false;
+				desktopSwitcher.deinit();
+				if(run != null)
+					run.run();
+				invalidate();
+			}
+		});
+    	desktopSwitcher.startAnimation(fadeOutAnimation);
 	}
 	
 	public void openAllAppsGrid()
@@ -179,6 +286,7 @@ public class Workspace extends ViewGroup
 	{
 		if(!trayViewOpened)
 		{
+			closeAllOpen();
 			CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
 	    	((DesktopView)getCurrentDesktop()).addView(trayView, -1, lp);
 	    	trayViewOpened = true;
@@ -217,6 +325,10 @@ public class Workspace extends ViewGroup
 
 	public boolean isMyPlacesOpened() {
 		return (trayViewOpened && trayView.isMyPlacesGridOpened());
+	}
+
+	public boolean isDesktopSwitcherOpened() {
+		return (desktopSwitcherOpened);
 	}
     
     public void openFolder(final Folder f)
@@ -335,7 +447,8 @@ public class Workspace extends ViewGroup
     }
 	
 	public boolean isAnythingOpen() {
-		return (appsGridOpened || openedFolder != null || myPlacesOpened || trayViewOpened);
+		return (appsGridOpened || openedFolder != null || myPlacesOpened || trayViewOpened ||
+				isDesktopSwitcherOpened());
 	}
 
 	public void cancelAllLongPresses() {
@@ -655,13 +768,16 @@ public class Workspace extends ViewGroup
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
 	{
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		
 		int width = MeasureSpec.getSize(widthMeasureSpec);
+		int height = MeasureSpec.getSize(heightMeasureSpec);
+		
+		setMeasuredDimension(width, height);
 		
 		for(int i = 0; i < getChildCount(); i++)
 		{
-			getChildAt(i).measure(widthMeasureSpec, heightMeasureSpec);
+			View child = getChildAt(i);
+			
+			child.measure(widthMeasureSpec, heightMeasureSpec);
 		}
 	}
 
