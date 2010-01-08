@@ -46,6 +46,6 @@
 	</PreferenceCategory>
 	<PreferenceCategory android:title="@string/prefs_gestures">
 		<Preference android:title="@string/prefs_gesture_settings"
-			android:key="prefs_gestures" />
+			android:key="prefs_gestures" android:dependency="toolbar_show_gesture_button"/>
 	</PreferenceCategory>
 </PreferenceScreen>
