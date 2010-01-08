@@ -6,14 +6,16 @@ import java.util.Vector;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.DialogInterface.OnClickListener;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
 import android.preference.Preference.OnPreferenceChangeListener;
+import android.preference.Preference.OnPreferenceClickListener;
 
 import com.threefiftynice.android.preference.ListPreferenceMultiSelect;
 
@@ -36,11 +38,11 @@ public class Settings extends PreferenceActivity {
 		ListPreference defDesktop = (ListPreference) findPreference(Config.DEFAULT_DESKTOP_NUM_KEY);
 
 		CheckBoxPreference desktopRotation = (CheckBoxPreference)findPreference(Config.DESKTOP_ROTATION_KEY);
-		
+
 		CheckBoxPreference callerBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_CALLER_BUTTON_KEY);
 		CheckBoxPreference contactsBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_CONTACTS_BUTTON_KEY);
 		CheckBoxPreference switcherBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_DESKTOP_SWITCHER_BUTTON_KEY);
-		
+		CheckBoxPreference gestureBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_GESTURE_BUTTON_KEY);
 
 		CheckBoxPreference changerActive = (CheckBoxPreference)findPreference(Config.WALLPAPER_CHANGER_ACTIVE_KEY);
 		CheckBoxPreference changerSetOnStart = (CheckBoxPreference)findPreference(Config.WALLPAPER_CHANGER_SET_ON_START_KEY);
@@ -130,6 +132,17 @@ public class Settings extends PreferenceActivity {
 			}
 		});
 		
+		gestureBtn.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference,
+					Object newValue) {
+				Config.putBoolean(Config.TOOLBAR_SHOW_GESTURE_BUTTON_KEY, (Boolean)newValue);
+				
+				reinitToolbar = true;
+				
+				return true;
+			}
+		});
+		
 		desktopRotation.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
 			public boolean onPreferenceChange(Preference preference,
 					Object newValue) {
@@ -178,6 +191,14 @@ public class Settings extends PreferenceActivity {
 				
 				restartWallpaperChanger = true;
 				
+				return true;
+			}
+		});
+		
+		Preference gestures = (Preference)findPreference("prefs_gestures");
+		gestures.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+			public boolean onPreferenceClick(Preference arg0) {
+				startActivity(new Intent(Settings.this, GestureSettings.class));
 				return true;
 			}
 		});

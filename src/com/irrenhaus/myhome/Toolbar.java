@@ -113,6 +113,22 @@ public class Toolbar extends LinearLayout {
 			toolbarButtons.add(desktopSwitcher);
 		}
 		
+		if(Config.getBoolean(Config.TOOLBAR_SHOW_GESTURE_BUTTON_KEY, true))
+		{
+			Button gesture = new Button(context);
+			gesture.setBackgroundResource(R.drawable.gesture_toolbar_button);
+			gesture.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					if(workspace.isGestureViewOpened())
+						workspace.closeGestureView(null);
+					else
+						workspace.openGestureView();
+				}
+	        });
+
+			toolbarButtons.add(gesture);
+		}
+		
 		showButtons();
 		
 		trayIcon = new ImageView(context);

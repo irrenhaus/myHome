@@ -4,21 +4,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.PaintFlagsDrawFilter;
-import android.graphics.PixelFormat;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.PaintDrawable;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.TextView;
 
 public class AppsCache implements Runnable {
 	private Context context;
@@ -56,6 +58,16 @@ public class AppsCache implements Runnable {
 		for(int i = 0; i < getAppCount(); i++)
 		{
 			if(applicationInfos.get(i).intentUri.equals(intentUri))
+				return applicationInfos.get(i);
+		}
+		return null;
+	}
+	
+	public ApplicationInfo searchByName(String name)
+	{
+		for(int i = 0; i < getAppCount(); i++)
+		{
+			if(applicationInfos.get(i).name.equals(name))
 				return applicationInfos.get(i);
 		}
 		return null;
@@ -155,8 +167,119 @@ public class AppsCache implements Runnable {
         
         loadingDone = true;
 	}
+
+	public String resolveNameByIntent(Intent intent) {
+		String name = null;
+		
+		if(intent != null)
+		{
+			PackageManager pkgMgr = context.getPackageManager();
+			final List<ResolveInfo> apps = pkgMgr.queryIntentActivities(intent, 0);
+			
+			if(apps.size() > 0)
+			{
+				ResolveInfo resolve = apps.get(0);
+				name = (String)resolve.loadLabel(pkgMgr);
+			}
+		}
+		
+		return name;
+	}
+
+	public ApplicationInfo resolveByIntent(Intent i) {
+		ApplicationInfo info = null;
+		
+		if(i != null)
+		{
+			PackageManager pkgMgr = context.getPackageManager();
+			final List<ResolveInfo> apps = pkgMgr.queryIntentActivities(i, 0);
+			
+			if(apps.size() > 0)
+			{
+				ResolveInfo resolve = apps.get(0);
+				
+	        	Intent intent = new Intent(Intent.ACTION_MAIN);
+	            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+	            intent.setComponent(new ComponentName(resolve.activityInfo.applicationInfo.packageName,
+	            									  resolve.activityInfo.name));
+	        	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+
+	        	info = searchByIntent(intent);
+			}
+		}
+		
+		return info;
+	}
+	
+	public Dialog createSelectShortcutDialog(final SelectShortcutListener listener)
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(myHome.getInstance());
+		
+		builder.setNegativeButton(R.string.dialog_button_cancel, new OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				listener.onSelected(null);
+				dialog.cancel();
+			}
+		});
+		
+		final ApplicationShortcutAdapter adapter = new ApplicationShortcutAdapter(myHome.getInstance());
+		
+		builder.setSingleChoiceItems(adapter, -1,
+				new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+				listener.onSelected(((ApplicationInfo)adapter.getItem(which)).intent);
+				dialog.cancel();
+			}
+		});
+		
+		return builder.create();
+	}
 	
 	//////////////////////////////////////////////////////////////////
+	
+	private class ApplicationShortcutAdapter extends BaseAdapter {
+		private Context					context;
+		private AppsCache				cache;
+		
+		public ApplicationShortcutAdapter(Context context)
+		{
+			this.context = context;
+			this.cache = AppsCache.getInstance();
+		}
+		
+		public int getCount() {
+			return cache.getAppCount();
+		}
+
+		public Object getItem(int arg0) {
+			return cache.getAppInfo(arg0);
+		}
+
+		public long getItemId(int arg0) {
+			return 0;
+		}
+
+		public View getView(int arg0, View arg1, ViewGroup arg2) {
+			ApplicationInfo info = cache.getAppInfo(arg0);
+			
+			if(arg1 != null && arg1 instanceof TextView)
+			{
+				TextView item = (TextView)arg1;
+				item.setText(info.name);
+				item.setCompoundDrawables(info.icon, null, null, null);
+				item.setTextColor(Color.BLACK);
+			}
+			
+			LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			TextView item = (TextView) inflater.inflate(android.R.layout.simple_list_item_1, null);
+			item.setText(info.name);
+			item.setCompoundDrawables(info.icon, null, null, null);
+			item.setTextColor(Color.BLACK);
+			
+			return item;
+		}
+		
+	}
 	
 	public class ApplicationInfo
 	{
@@ -184,5 +307,11 @@ public class AppsCache implements Runnable {
 					  (intent == null && info.intent == null)) &&
 					(isFolder == info.isFolder));
 		}
+	}
+	
+	///////////////////////////////////////////////
+	
+	public interface SelectShortcutListener {
+		public void onSelected(Intent intent);
 	}
 }

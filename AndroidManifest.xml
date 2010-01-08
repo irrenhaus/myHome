@@ -20,6 +20,7 @@
 <activity android:name="WallpaperChanger" android:label="@string/wallpaper_changer_title"></activity>
 <activity android:label="@string/prefs_title" android:name="Settings"></activity>
 <service android:label="@string/wallpaper_changer_service_label" android:name="WallpaperChangerService"></service>
+<activity android:name="GestureSettings" android:label="@string/prefs_gesture_settings"></activity>
 </application>
     <uses-sdk android:minSdkVersion="4" />
 
@@ -27,4 +28,6 @@
 <uses-permission android:name="android.permission.BIND_APPWIDGET"></uses-permission>
 <uses-permission android:name="android.permission.VIBRATE"></uses-permission>
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
+<uses-permission android:name="android.permission.CALL_PHONE"></uses-permission>
+<uses-permission android:name="android.permission.READ_CONTACTS"></uses-permission>
 </manifest> 

@@ -61,6 +61,9 @@ public class Workspace extends ViewGroup
 	
 	private DesktopSwitcher			desktopSwitcher = null;
 	private boolean 				desktopSwitcherOpened = false;
+	
+	private GestureView				gestureView = null;
+	private boolean 				gestureViewOpened = false;
 
 	private static final float		scrollDuration = 150;
 	
@@ -126,6 +129,8 @@ public class Workspace extends ViewGroup
         trayView = new TrayView(home, allAppsGrid, myPlacesGrid);
 		
 		desktopSwitcher = new DesktopSwitcher(home);
+		
+		gestureView = new GestureView(home);
 		
 		//setPadding(4, 4, 4, 4);
 	}
@@ -256,6 +261,8 @@ public class Workspace extends ViewGroup
 			closeTrayView(null);
 		if(desktopSwitcherOpened)
 			closeDesktopSwitcher(null);
+		if(gestureViewOpened)
+			closeGestureView(null);
 	}
 	
 	public void closeAllOpenFor(Runnable run)
@@ -270,6 +277,12 @@ public class Workspace extends ViewGroup
 		if(desktopSwitcherOpened)
 		{
 			closeDesktopSwitcher(run);
+			ran = true;
+		}
+		
+		if(gestureViewOpened)
+		{
+			closeGestureView(run);
 			ran = true;
 		}
 		
@@ -306,6 +319,35 @@ public class Workspace extends ViewGroup
 			}
 		});
     	desktopSwitcher.startAnimation(fadeOutAnimation);
+	}
+	
+	public void openGestureView()
+	{
+		closeAllOpen();
+		
+		RectF size = new RectF();
+		getCurrentDesktop().cellToRect(0, 0, 4, 4, size);
+	
+		CellLayout.LayoutParams lp = new CellLayout.LayoutParams(0, 0, 4, 4);
+		getCurrentDesktop().addView(gestureView, -1, lp);
+		
+		gestureView.startAnimation(fadeInAnimation);
+		gestureViewOpened = true;
+		invalidate();
+	}
+	
+	public void closeGestureView(final Runnable run)
+	{
+		gestureView.setDoOnAnimationEnd(new Runnable() {
+			public void run() {
+		    	getCurrentDesktop().removeView(gestureView);
+				gestureViewOpened = false;
+				if(run != null)
+					run.run();
+				invalidate();
+			}
+		});
+    	gestureView.startAnimation(fadeOutAnimation);
 	}
 	
 	public void openAllAppsGrid()
@@ -366,6 +408,10 @@ public class Workspace extends ViewGroup
 
 	public boolean isDesktopSwitcherOpened() {
 		return (desktopSwitcherOpened);
+	}
+
+	public boolean isGestureViewOpened() {
+		return (gestureViewOpened);
 	}
     
     public void openFolder(final Folder f)
@@ -485,7 +531,7 @@ public class Workspace extends ViewGroup
 	
 	public boolean isAnythingOpen() {
 		return (appsGridOpened || openedFolder != null || myPlacesOpened || trayViewOpened ||
-				isDesktopSwitcherOpened());
+				isDesktopSwitcherOpened() || isGestureViewOpened());
 	}
 
 	public void cancelAllLongPresses() {
@@ -565,6 +611,9 @@ public class Workspace extends ViewGroup
 			return;
 		}
 		
+		if(isAnythingOpen())
+			return;
+		
 		Object tag = v.getTag();
 		
 		if((tag instanceof DesktopItem))
@@ -595,6 +644,9 @@ public class Workspace extends ViewGroup
 				openedFolder.close();
 			return true;
 		}
+		
+		if(isAnythingOpen())
+			return true;
 		
 		Object tag = v.getTag();
 		

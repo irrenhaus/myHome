@@ -18,6 +18,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.Intent.ShortcutIconResource;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -45,9 +46,11 @@ public class myHome extends Activity {
 	private Screen						screen = null;
 	private Toolbar						toolbar = null;
 
-	private static final int			PICK_WIDGET = 1;
-	public  static final int			ADD_WIDGET = 2;
-	private static final int			PICK_ACTION = 3;
+	public static final int				PICK_WIDGET = 1;
+	public static final int				ADD_WIDGET = 2;
+	public static final int				PICK_ACTION = 3;
+	public static final int				PICK_GESTURE_SHORTCUT_ACTION = 3;
+	public static final int				COMPLETE_PICK_GESTURE_SHORTCUT_ACTION = 4;
 	
 
 	public static final int 			DESKTOP_ACTION_ADD_WIDGET = 0;
@@ -120,6 +123,8 @@ public class myHome extends Activity {
 		WallpaperChangerService.setContext(getApplicationContext());
 		if(Config.getBoolean(Config.WALLPAPER_CHANGER_ACTIVE_KEY, false))
 			startWallpaperChangerService();
+		
+		GestureView.loadLibrary();
     }
     
     @Override
@@ -456,9 +461,83 @@ public class myHome extends Activity {
 		    			WidgetCache.getInstance().deleteAppWidgetId(id);
 		    		}
 		    	}
+		    	else if(requestCode == PICK_GESTURE_SHORTCUT_ACTION)
+		    	{
+		    		addGestureShortcut(data);
+		    	}
+		    	else if(requestCode == COMPLETE_PICK_GESTURE_SHORTCUT_ACTION)
+		    	{
+		    		completeAddGestureShortcut(data);
+		    		
+		    		String name = data.getStringExtra(Intent.EXTRA_SHORTCUT_NAME);
+		    		String text = getResources().getString(R.string.gesture_shortcut_created);
+		    		text += " "+name;
+		    		
+		    		Toast.makeText(myHome.this, text, Toast.LENGTH_SHORT).show();
+		    	}
 			}
     	});
 	}
+    
+    public void startGestureShortcutPicker()
+    {
+    	final Intent pickIntent = new Intent(Intent.ACTION_PICK_ACTIVITY);
+		pickIntent.putExtra(Intent.EXTRA_INTENT, new Intent(Intent.ACTION_CREATE_SHORTCUT));
+		pickIntent.putExtra(Intent.EXTRA_TITLE, getResources().getString(R.string.pick_gesture_shortcut_title));
+		
+		Bundle extras = new Bundle();
+		ArrayList<String> extraNames = new ArrayList<String>();
+		extraNames.add(getResources().getString(R.string.extra_group_applications));
+		extras.putStringArrayList(Intent.EXTRA_SHORTCUT_NAME, extraNames);
+		
+		ArrayList<ShortcutIconResource> extraIcons = new ArrayList<ShortcutIconResource>();
+		extraIcons.add(ShortcutIconResource.fromContext(this, R.drawable.icon));
+		extras.putParcelableArrayList(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, extraIcons);
+		
+		pickIntent.putExtras(extras);
+		
+		startActivityForResult(pickIntent, myHome.PICK_GESTURE_SHORTCUT_ACTION);
+    }
+    
+    private void addGestureShortcut(Intent data)
+    {
+    	if(data == null)
+    		 return;
+    		 
+    	String shortcutName = data.getStringExtra(Intent.EXTRA_SHORTCUT_NAME);
+    	
+    	if(shortcutName != null &&
+    			shortcutName.equals(getResources().getString(R.string.extra_group_applications)))
+   		{
+    		AppsCache.getInstance().createSelectShortcutDialog(
+    				new AppsCache.SelectShortcutListener() {
+    					@Override
+    					public void onSelected(Intent intent)
+    					{
+    						completeAddGestureAppShortcut(intent);
+    					}
+			}).show();
+    	}
+    	else
+    		startActivityForResult(data, COMPLETE_PICK_GESTURE_SHORTCUT_ACTION);
+    }
+    
+    private void completeAddGestureShortcut(Intent data)
+    {
+    	if(data == null)
+    		return;
+    	
+    	Intent intent = data.getParcelableExtra(Intent.EXTRA_SHORTCUT_INTENT);
+    	GestureView.savePendingGesture(intent.toURI(), this);
+    }
+    
+    private void completeAddGestureAppShortcut(Intent intent)
+    {
+    	if(intent == null)
+    		return;
+    	
+    	GestureView.savePendingGesture(intent.toURI(), this);
+    }
     
     private String dumpCursorToSql(Cursor cursor, String table)
     {

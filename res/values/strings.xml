@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="prefs_gesture_manage_list">Manage gestures:</string>
+    <string name="prefs_gesture_min_score">Minimal score to recognize:</string>
+    <string name="prefs_gestures">Gestures</string>
+    <string name="prefs_toolbar_show_gesture_button">Show gesture button</string>
     <string name="prefs_toolbar_show_desktop_switcher_button">Show DesktopSwitcher button</string>
     <string name="prefs_wallpaper_changer_change_on_start_summary">Change the wallpaper immediately when service starts.</string>
     <string name="prefs_wallpaper_changer_change_on_start">Change on start</string>
@@ -58,4 +62,13 @@
 <string name="menu_entry_screenshot">Screenshot</string>
 <string name="screenshot_error">Sorry, I could not take screenshot.</string>
 <string name="screenshot_success">Screenshot is at /sdcard/myHome/screenshot.png.</string>
+<string name="pick_gesture_shortcut_title">Pick gesture shortcut</string>
+<string name="gesture_shortcut_created">Created gesture for:</string>
+<string name="gesture_unknown_action">Sorry, I could not start the assigned action.</string>
+<string name="gesture_action_call">Calling</string>
+<string name="gesture_action_main">Opening</string>
+<string name="extra_group_applications">Applications</string>
+<string name="dialog_remove_gesture_message">Are you shure you want to remove the gesture?:</string>
+<string name="dialog_remove_gesture_title">Remove gesture</string>
+<string name="prefs_gesture_settings">Gesture settings</string>
 </resources>
