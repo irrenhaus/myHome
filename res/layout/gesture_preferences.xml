@@ -3,7 +3,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent">
 <TextView android:id="@+id/TextView01" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/prefs_gesture_min_score"></TextView>
-<SeekBar android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/minScoreValue" android:max="20" android:progress="10"></SeekBar>
+<SeekBar android:layout_height="wrap_content" android:layout_width="fill_parent" android:id="@+id/minScoreValue" android:progress="10" android:max="50"></SeekBar>
 <TextView android:layout_height="wrap_content" android:layout_width="fill_parent" android:gravity="center" android:id="@+id/scoreValueView"></TextView><TextView android:id="@+id/TextView02" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/prefs_gesture_manage_list"></TextView>
 <ListView android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1.0" android:id="@+id/gesturesList"></ListView>
 

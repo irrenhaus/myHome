@@ -93,36 +93,24 @@ public class GestureView extends LinearLayout
 	{
 		String action = intent.getAction();
 		
-		if(action.equals(Intent.ACTION_CALL))
+		if(action.equals(Intent.ACTION_CALL) || action.equals(Intent.ACTION_SENDTO))
 		{
 			HashMap<String, Object> data = new HashMap<String, Object>();
 			
-			Uri numberUri = intent.getData();
-			String uriStr = numberUri.toString();
-			String numberStr = uriStr.replaceAll("tel:", "");
+			String numberStr = "";
+			
+			if(action.equals(Intent.ACTION_SENDTO))
+				numberStr = intent.getData().toString().replaceAll("smsto:", "");
+			else
+				numberStr = intent.getData().toString().replaceAll("tel:", "");
 			
 			data.put("number", numberStr);
-			
-			String[] projection = new String[] {
-                    People._ID,
-                    People.NAME,
-                    Phones.PERSON_ID
-                 };
 			
 			String who = "";
 			long id = 0;
 			
-			ContentResolver resolver = context.getContentResolver();
-			Cursor c = resolver.query(Contacts.Phones.CONTENT_URI, projection,
-			          Contacts.PhonesColumns.NUMBER+"=?", new String[] {numberStr}, null);
-			
-			if(c != null && c.moveToFirst())
-			{
-				who = c.getString(c.getColumnIndex(People.NAME));
-				id = c.getLong(c.getColumnIndex(Phones.PERSON_ID));
-				
-				c.close();
-			}
+			who = getNameForNumber(numberStr, context);
+			id = getIdForNumber(numberStr, context);
 			
 			data.put("name", who);
 			
@@ -153,6 +141,54 @@ public class GestureView extends LinearLayout
 		}
 		
 		return null;
+	}
+	
+
+	
+	private static String getNameForNumber(String number, Context context)
+	{
+		String[] projection = new String[] {
+                People._ID,
+                People.NAME,
+             };
+		
+		String who = "";
+		
+		ContentResolver resolver = context.getContentResolver();
+		Cursor c = resolver.query(Contacts.Phones.CONTENT_URI, projection,
+		          Contacts.PhonesColumns.NUMBER+"=?", new String[] {number}, null);
+		
+		if(c != null && c.moveToFirst())
+		{
+			who = c.getString(c.getColumnIndex(People.NAME));
+			
+			c.close();
+		}
+		
+		return who;
+	}
+	
+	private static long getIdForNumber(String number, Context context)
+	{
+		String[] projection = new String[] {
+                People._ID,
+                Phones.PERSON_ID
+             };
+		
+		long id =-1;
+		
+		ContentResolver resolver = context.getContentResolver();
+		Cursor c = resolver.query(Contacts.Phones.CONTENT_URI, projection,
+		          Contacts.PhonesColumns.NUMBER+"=?", new String[] {number}, null);
+		
+		if(c != null && c.moveToFirst())
+		{
+			id = c.getLong(c.getColumnIndex(Phones.PERSON_ID));
+			
+			c.close();
+		}
+		
+		return id;
 	}
 	
 	public static void addNewGesture(Gesture gesture)
@@ -211,34 +247,14 @@ public class GestureView extends LinearLayout
 		
 		if(action.equals(Intent.ACTION_CALL))
 		{
-			Uri numberUri = intent.getData();
-			String uriStr = numberUri.toString();
-			String numberStr = uriStr.replaceAll("tel:", "");
+			String numberStr = intent.getData().toString().replaceAll("tel:", "");
 			
-			String[] projection = new String[] {
-                    People._ID,
-                    People.NAME,
-                 };
-			
-			String who = "";
-			
-			ContentResolver resolver = context.getContentResolver();
-			Cursor c = resolver.query(Contacts.Phones.CONTENT_URI, projection,
-			          Contacts.PhonesColumns.NUMBER+"=?", new String[] {numberStr}, null);
-			
-			if(c != null && c.moveToFirst())
-			{
-				who = c.getString(c.getColumnIndex(People.NAME));
-				
-				c.close();
-			}
+			String who = getNameForNumber(numberStr, context);
 			
 			text = context.getResources().getString(R.string.gesture_action_call);
 			text += " "+who;
 			
 			Log.d("myHome", "Gesture: "+text);
-			
-			Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
 		} else if(action.equals(Intent.ACTION_MAIN)) {
 			String name = AppsCache.getInstance().resolveNameByIntent(intent);
 			
@@ -249,6 +265,15 @@ public class GestureView extends LinearLayout
 				
 				Log.d("myHome", "Gesture: "+text);
 			}
+		} else if(action.equals(Intent.ACTION_SENDTO)) {
+			String numberStr = intent.getData().toString().replaceAll("smsto:", "");
+			
+			String who = getNameForNumber(numberStr, context);
+			
+			text = context.getResources().getString(R.string.gesture_action_sendto);
+			text += " "+who;
+			
+			Log.d("myHome", "Gesture: "+text);
 		}
 		
 		if(text != null)
@@ -286,6 +311,7 @@ public class GestureView extends LinearLayout
 				
 				if(cur.score > minScore)
 				{
+					Log.d("myHome", "Selected gesture with score "+cur.score);
 					performGestureAction(cur.name, getContext());
 				}
 				else

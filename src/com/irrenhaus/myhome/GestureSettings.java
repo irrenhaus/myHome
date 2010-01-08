@@ -228,6 +228,21 @@ public class GestureSettings extends Activity {
 				text = ((ApplicationInfo)data).name;
 			}
 			
+			try {
+				Intent intent = Intent.parseUri(GestureView.getGestureName(position), 0);
+				
+				String action = intent.getAction();
+
+				if(action.equals(Intent.ACTION_MAIN))
+					text = context.getResources().getString(R.string.intent_action_main) + " " + text;
+				else if(action.equals(Intent.ACTION_CALL))
+					text = context.getResources().getString(R.string.intent_action_call) + " " + text;
+				else if(action.equals(Intent.ACTION_SENDTO))
+					text = context.getResources().getString(R.string.intent_action_sendto) + " " + text;
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
+			
 			view.setCompoundDrawables(getIcon(position), null, right, null);
 			view.setText(text);
 			view.setGravity(Gravity.CENTER);

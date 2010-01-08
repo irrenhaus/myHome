@@ -71,4 +71,8 @@
 <string name="dialog_remove_gesture_message">Are you shure you want to remove the gesture?:</string>
 <string name="dialog_remove_gesture_title">Remove gesture</string>
 <string name="prefs_gesture_settings">Gesture settings</string>
+<string name="gesture_action_sendto">Sending SMS to</string>
+<string name="intent_action_main">Open</string>
+<string name="intent_action_call">Call </string>
+<string name="intent_action_sendto">SMS to</string>
 </resources>

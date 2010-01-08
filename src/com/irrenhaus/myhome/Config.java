@@ -70,7 +70,7 @@ public class Config {
 		values.put(WALLPAPER_CHANGER_SET_ON_START_KEY, false);
 		persist.put(WALLPAPER_CHANGER_SET_ON_START_KEY, true);
 		
-		values.put(GESTURE_MIN_SCORE_KEY, 1.0f);
+		values.put(GESTURE_MIN_SCORE_KEY, 2.5f);
 		persist.put(GESTURE_MIN_SCORE_KEY, true);
 		
 		SharedPreferences prefs = context.getSharedPreferences("config", 0);
