@@ -95,9 +95,12 @@ public class myHome extends Activity {
         
         AppsCache.getInstance().setContext(getApplicationContext());
         WidgetCache.getInstance().init(getApplicationContext());
+
+        PlacesView placesView = (PlacesView)findViewById(R.id.placesView);
+        AppsView appsView = (AppsView)findViewById(R.id.appsView);
         
         workspace = (Workspace)findViewById(R.id.workspace);
-        workspace.setHome(this);
+        workspace.setHome(this, placesView, appsView);
         
         screen = (Screen)findViewById(R.id.screen);
         

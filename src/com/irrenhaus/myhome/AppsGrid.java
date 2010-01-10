@@ -1,17 +1,9 @@
 package com.irrenhaus.myhome;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.Point;
-import android.util.Log;
-import android.view.MotionEvent;
+import android.util.AttributeSet;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnLongClickListener;
-import android.widget.AdapterView;
 import android.widget.GridView;
-
-import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
 public class AppsGrid extends GridView implements DragSource {
 	public static final int NUM_COLUMNS_APPSVIEW = 4;
@@ -26,12 +18,18 @@ public class AppsGrid extends GridView implements DragSource {
 	private Runnable doOnAnimationEnd;
 	
 	public AppsGrid(final Context context) {
-		super(context);
+		this(context, null);
+	}
+	
+	public AppsGrid(final Context context, AttributeSet attr) {
+		super(context, attr);
 		
 		this.setNumColumns(NUM_COLUMNS_APPSVIEW);
-		this.setPadding(4, 4, 4, 4);
 		this.setVerticalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
 		this.setHorizontalSpacing((int) (context.getResources().getDimension(android.R.dimen.app_icon_size)/4));
+	
+		if(this.getCacheColorHint() > 0)
+			this.setCacheColorHint(0);
 	}
 
     @Override

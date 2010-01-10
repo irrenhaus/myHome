@@ -1,10 +1,7 @@
 package com.irrenhaus.myhome;
 
-import android.appwidget.AppWidgetHostView;
-import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -42,6 +39,10 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 	private boolean 		messageShown;
 	private boolean 		vacantCellsUpdated;
 	private WidgetCache 	widgetCache = WidgetCache.getInstance();
+	
+	private Paint			defaultPaint = new Paint();
+	private boolean 		drawingCacheEnabled = false;
+	private Bitmap drawingCache;
 	
 	public DesktopView(Context context) {
 		super(context);
@@ -292,6 +293,7 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 				
 				openedFolder.getAdapter().reload();
 				openedFolder.getAdapter().notifyDataSetChanged();
+				openedFolder.contentChanged();
 			}
 		}
 		else
@@ -467,6 +469,43 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		this.removeView(view);
 	}
 
+	public void enableDrawingCache()
+	{
+		drawingCacheEnabled = true;
+	}
+	
+	public void disableDrawingCache()
+	{
+		drawingCacheEnabled = false;
+		if(drawingCache != null)
+			drawingCache.recycle();
+		drawingCache = null;
+	}
+	
+	@Override
+	public void onDraw(Canvas canvas)
+	{
+		if(drawingCacheEnabled)
+		{
+			Bitmap bmp = drawingCache;
+			
+			if(bmp == null)
+			{
+				bmp = drawingCache = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+				Canvas c = new Canvas(drawingCache);
+				this.draw(c);
+			}
+			
+			if(bmp != null)
+			{
+				canvas.drawBitmap(bmp, 0, 0, defaultPaint);
+				return;
+			}
+		}
+		
+		super.onDraw(canvas);
+	}
+
 	public DragController getDragCtrl() {
 		return dragCtrl;
 	}
@@ -490,5 +529,9 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 
 	public Point getEstDropPosition() {
 		return estDropPosition;
+	}
+
+	public boolean isDrawingCacheEnabled() {
+		return drawingCacheEnabled;
 	}
 }

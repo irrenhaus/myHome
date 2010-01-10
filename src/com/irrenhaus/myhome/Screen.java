@@ -13,6 +13,7 @@ import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.Paint.Style;
 import android.net.Uri;
+import android.os.Debug;
 import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -59,9 +60,9 @@ public class Screen extends LinearLayout implements DragController {
 
 	private Paint				blackPaint;
 
-	private WallpaperManager wallpaperMgr;
+	private WallpaperManager 	wallpaperMgr;
 
-	private Bitmap wallpaperBmp;
+	private Bitmap 				wallpaperBmp;
 	
 	public Screen(Context context) {
 		super(context);
@@ -262,8 +263,6 @@ public class Screen extends LinearLayout implements DragController {
 				
 				desktopChangeInProgress = false;
 				
-				invalidate();
-				
 				return true;
 			}
 		}
@@ -291,7 +290,10 @@ public class Screen extends LinearLayout implements DragController {
 		}
 		
 		if(dragInProgress)
+		{
+			invalidate();
 			onTouchEvent(event);
+		}
 		
 		//if(gestureDetector.onTouchEvent(event))
 		//	return true;
@@ -308,7 +310,7 @@ public class Screen extends LinearLayout implements DragController {
 		else
 		{
 			int difference = startX - x;
-			
+				
 			workspace.scrollTo(scrollX+difference, 0);
 			
 			if(Math.abs(difference) > getWidth()*0.6)
@@ -327,9 +329,10 @@ public class Screen extends LinearLayout implements DragController {
     
     @Override
 	public void onDragBegin(DragSource src, View view, Object info) {
-		workspace.closeAllOpen();
-		
-		myHome.getInstance().getToolbar().showTrayIcon();
+		if(!(src instanceof MyPlacesGrid) && src instanceof AppsGrid)
+			workspace.closeAppsView(null);
+			
+    	myHome.getInstance().getToolbar().showTrayIcon();
 		
 		Vibrator vibrator = (Vibrator)context.getSystemService(Context.VIBRATOR_SERVICE);
 		vibrator.vibrate(50);
@@ -355,7 +358,6 @@ public class Screen extends LinearLayout implements DragController {
 		workspace.getCurrentDesktop().onIncomingDrag(dragView, dragInfo);
 		dragSource.onDrag(dragView, dragInfo);
 		workspace.getCurrentDesktop().setInitialDragPosition(eventPoint);
-		invalidate();
 		
 		view.setVisibility(GONE);
 	}
@@ -397,8 +399,6 @@ public class Screen extends LinearLayout implements DragController {
 					eventPoint.y = (int) event.getY() - (int)dragModY;
 					
 					workspace.getCurrentDesktop().onDragMovement(dragView, dragInfo, eventPoint);
-					
-					invalidate();
 				}
 
 				lastMovementEventX = (int)event.getX();
@@ -464,14 +464,6 @@ public class Screen extends LinearLayout implements DragController {
 				
 				builder.create().show();
 			}
-			else if(grid.getParent() instanceof Folder)
-			{
-				myHome.getInstance().storeRemoveShortcutFromPlace(
-										((ApplicationInfo)info).intentUri,
-										((Folder)grid.getParent()));
-				((Folder)grid.getParent()).getAdapter().reload();
-				((Folder)grid.getParent()).getAdapter().notifyDataSetChanged();
-			}
 			else
 			{
 				AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -523,6 +515,15 @@ public class Screen extends LinearLayout implements DragController {
 			}
 			
 			myHome.getInstance().storeRemoveItem(item);
+		} else if(src instanceof Folder)
+		{
+			Folder folder = (Folder) src;
+			myHome.getInstance().storeRemoveShortcutFromPlace(
+									((ApplicationInfo)info).intentUri,
+									folder);
+			folder.getAdapter().reload();
+			folder.getAdapter().notifyDataSetChanged();
+			folder.contentChanged();
 		}
 	}
 	

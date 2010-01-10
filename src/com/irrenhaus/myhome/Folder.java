@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
@@ -22,6 +23,7 @@ public class Folder extends LinearLayout implements DragSource {
 	
 	private LinearLayout		titleBar = null;
 	private ImageView			closeButton = null;
+	private	TextView			noContentView = null;
 	
 	private Context				context = null;
 	
@@ -30,7 +32,7 @@ public class Folder extends LinearLayout implements DragSource {
 	private DragController		dragCtrl;
 	
 	private boolean				open = false;
-	private Runnable doOnAnimationEnd;
+	private Runnable			doOnAnimationEnd;
 
 	public Folder(Context context, String title) {
 		super(context);
@@ -83,19 +85,45 @@ public class Folder extends LinearLayout implements DragSource {
 		
 		this.addView(titleBar);
 		
+		LayoutParams params = new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT);
+		
 		
 		grid = new AppsGrid(context);
+		grid.setLayoutParams(params);
 		
 		adapter = new AppsAdapter(context, new FolderAppsFilter(title, context));
 		
 		grid.setAdapter(adapter);
 		grid.setBackgroundDrawable(null);
 		
-		this.addView(grid);
-		this.setBackgroundResource(R.drawable.folder_bg);
+		addView(grid);
+		setBackgroundResource(R.drawable.folder_bg);
 		
 		adapter.reload();
 		adapter.notifyDataSetChanged();
+		
+		noContentView = new TextView(context);
+		noContentView.setLayoutParams(params);
+		noContentView.setText(R.string.folder_no_content);
+		noContentView.setGravity(Gravity.CENTER);
+	}
+	
+	@Override
+	public void onSizeChanged(int w, int h, int oldw, int oldh)
+	{
+		super.onSizeChanged(w, h, oldw, oldh);
+		
+		contentChanged();
+	}
+	
+	public void contentChanged()
+	{
+		removeAllViews();
+		
+		if(adapter.getCount() <= 0)
+			addView(noContentView);
+		else
+			addView(grid);
 	}
 	
 	public void setNumColumns(int num)

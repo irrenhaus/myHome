@@ -76,21 +76,13 @@ public class Toolbar extends LinearLayout {
 		
 		allAppsGrid.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				if(workspace.isAppsGridOpened())
-					workspace.closeTrayView(null);
-				else
-					workspace.openAllAppsGrid();
+				workspace.toggleAppsView();
 			}
         });
         
 		 myPlaces.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					if(workspace.isMyPlacesOpened())
-						workspace.closeTrayView(null);
-					else if(workspace.getOpenedFolder() != null && !workspace.isFolderOpenedInScreen())
-						workspace.closeFolder();
-					else
-						workspace.openMyPlaces();
+					workspace.togglePlacesView();
 				}
 	        });
 			

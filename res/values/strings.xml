@@ -75,4 +75,5 @@
 <string name="intent_action_main">Open</string>
 <string name="intent_action_call">Call </string>
 <string name="intent_action_sendto">SMS to</string>
+<string name="folder_no_content">Sorry, no content here.</string>
 </resources>
