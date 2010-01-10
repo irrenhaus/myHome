@@ -30,6 +30,8 @@ public class AppsGrid extends GridView implements DragSource {
 	
 		if(this.getCacheColorHint() > 0)
 			this.setCacheColorHint(0);
+		
+		this.setChildrenDrawingCacheEnabled(true);
 	}
 
     @Override

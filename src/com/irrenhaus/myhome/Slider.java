@@ -147,7 +147,8 @@ public class Slider extends FrameLayout {
 		if(animate)
 		{
 			moving = true;
-			Log.d("myHome", "Start slider animation");
+			setChildrenDrawnWithCacheEnabled(true);
+			setChildrenDrawingCacheEnabled(true);
 			startAnimation(comeInAnimation);
 		}
 		
@@ -160,6 +161,8 @@ public class Slider extends FrameLayout {
 		{
 			closeAnimation = true;
 			moving = true;
+			setChildrenDrawnWithCacheEnabled(true);
+			setChildrenDrawingCacheEnabled(true);
 			startAnimation(goOutAnimation);
 		}
 		else
@@ -188,6 +191,8 @@ public class Slider extends FrameLayout {
     		doOnAnimationEnd.run();
     		doOnAnimationEnd = null;
     	}
+
+		setChildrenDrawnWithCacheEnabled(false);
     }
 
 	public void setContent(View contentView) {

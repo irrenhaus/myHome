@@ -57,6 +57,7 @@ public class Workspace extends ViewGroup
 	
 	private GestureView				gestureView = null;
 	private boolean 				gestureViewOpened = false;
+	private boolean 				childrenDrawingCacheEnabled = false;
 	
 	private static final float		scrollDuration = 150;
 	
@@ -153,6 +154,9 @@ public class Workspace extends ViewGroup
 	
 	public void startScroll(int sx, int sy, int dx, int dy)
 	{
+		if(!childrenDrawingCacheEnabled)
+			enableDrawingCache();
+		
 		final Screen screen = myHome.getInstance().getScreen();
 		int duration = Math.abs((int)((scrollDuration / (float)getWidth()) * (float)dx));
 		Interpolator i = null;
@@ -171,6 +175,7 @@ public class Workspace extends ViewGroup
 						public void run() {
 							scrollTo(scroller.getFinalX(), scroller.getFinalY());
 							screen.invalidate();
+							disableDrawingCache();
 						}
 					});
 					this.cancel();
@@ -897,12 +902,17 @@ public class Workspace extends ViewGroup
 	public void enableDrawingCache()
 	{
 		for(DesktopView view: desktopView)
-			view.enableDrawingCache();
+		{
+			view.setChildrenDrawnWithCacheEnabled(true);
+			view.setChildrenDrawingCacheEnabled(true);
+		}
+		childrenDrawingCacheEnabled = true;
 	}
 	
 	public void disableDrawingCache()
 	{
 		for(DesktopView view: desktopView)
-			view.disableDrawingCache();
+			view.setChildrenDrawnWithCacheEnabled(false);
+		childrenDrawingCacheEnabled = false;
 	}
 }

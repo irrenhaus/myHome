@@ -10,16 +10,17 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Paint.Style;
 import android.net.Uri;
-import android.os.Debug;
 import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
@@ -63,6 +64,10 @@ public class Screen extends LinearLayout implements DragController {
 	private WallpaperManager 	wallpaperMgr;
 
 	private Bitmap 				wallpaperBmp;
+	private Rect				wallpaperSrcRect;
+	private RectF				wallpaperDstRect;
+	
+	private FrameLayout			toolbarContainer;
 	
 	public Screen(Context context) {
 		super(context);
@@ -104,6 +109,11 @@ public class Screen extends LinearLayout implements DragController {
 		
     	wallpaperMgr = WallpaperManager.getInstance();
     	wallpaperChanged();
+    	
+    	toolbarContainer = (FrameLayout) findViewById(R.id.toolbarContainer);
+
+    	wallpaperDstRect = new RectF(0, 0, getWidth(), getHeight());
+    	wallpaperSrcRect = new Rect(0, 0, getWidth(), getHeight());
 	}
 	
 	public void wallpaperChanged()
@@ -143,7 +153,12 @@ public class Screen extends LinearLayout implements DragController {
     		if(scrollX < 0)
     			x = 0;
 
-    		canvas.drawBitmap(wallpaperBmp, x, (getBottom() - getTop() - wallpaperBmp.getHeight()) / 2, defaultPaint);
+    		wallpaperSrcRect.left = (int) (x * -1);
+    		wallpaperSrcRect.top = (getBottom() - getTop() - wallpaperBmp.getHeight()) / 2 * -1;
+    		wallpaperSrcRect.right = wallpaperSrcRect.left + getWidth();
+    		wallpaperSrcRect.bottom = wallpaperSrcRect.top + getHeight();
+    		
+    		canvas.drawBitmap(wallpaperBmp, wallpaperSrcRect, wallpaperDstRect, defaultPaint);
     	}
     	
     	super.dispatchDraw(canvas);
@@ -259,9 +274,7 @@ public class Screen extends LinearLayout implements DragController {
 		{
 			if(desktopChangeInProgress)
 			{
-				workspace.gotoDesktop(workspace.getCurrentDesktopNum() + desktopToSet);
-				
-				desktopChangeInProgress = false;
+				endDesktopChange();
 				
 				return true;
 			}
@@ -274,10 +287,7 @@ public class Screen extends LinearLayout implements DragController {
 					abs(clickY - (int)event.getY()) > 10) &&
 					!desktopChangeInProgress)
 			{
-				workspace.cancelAllLongPresses();
-				desktopChangeInProgress = true;
-				startScrollX = workspace.getScrollX();
-				startScrollY = workspace.getScrollY();
+				beginDesktopChange();
 			}
 			
 			if(desktopChangeInProgress)
@@ -294,11 +304,27 @@ public class Screen extends LinearLayout implements DragController {
 			invalidate();
 			onTouchEvent(event);
 		}
-		
-		//if(gestureDetector.onTouchEvent(event))
-		//	return true;
 			
 		return (dragInProgress || super.dispatchTouchEvent(event));
+	}
+	
+	private void beginDesktopChange()
+	{
+		//Debug.startMethodTracing("myhome_screenchange");
+		workspace.enableDrawingCache();
+		workspace.cancelAllLongPresses();
+		desktopChangeInProgress = true;
+		startScrollX = workspace.getScrollX();
+		startScrollY = workspace.getScrollY();
+	}
+	
+	private void endDesktopChange()
+	{
+		workspace.gotoDesktop(workspace.getCurrentDesktopNum() + desktopToSet);
+		
+		desktopChangeInProgress = false;
+		workspace.disableDrawingCache();
+		//Debug.stopMethodTracing();
 	}
 
 	private void performDesktopChange(int startX, int startY, int x, int y, int scrollX, int scrollY)
@@ -324,7 +350,7 @@ public class Screen extends LinearLayout implements DragController {
 				desktopToSet = 0;
 		}
 		
-		invalidate();
+		toolbarContainer.invalidate();
 	}
     
     @Override
