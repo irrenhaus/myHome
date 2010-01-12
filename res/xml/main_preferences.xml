@@ -24,7 +24,8 @@
 			android:title="@string/prefs_toolbar_show_desktop_switcher_button"></CheckBoxPreference>
 		<CheckBoxPreference android:key="toolbar_show_gesture_button"
 			android:defaultValue="true" android:title="@string/prefs_toolbar_show_gesture_button"></CheckBoxPreference>
-	</PreferenceCategory>
+	<CheckBoxPreference android:key="toolbar_show_task_mgr_button" android:title="@string/prefs_toolbar_show_task_mgr_button" android:defaultValue="true"></CheckBoxPreference>
+</PreferenceCategory>
 	<PreferenceCategory android:title="@string/prefs_wallpaper_changer_title">
 		<CheckBoxPreference android:defaultValue="false"
 			android:title="@string/prefs_wallpaper_changer_active" android:key="wallpaper_changer_active"></CheckBoxPreference>

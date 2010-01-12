@@ -121,6 +121,22 @@ public class Toolbar extends LinearLayout {
 			toolbarButtons.add(gesture);
 		}
 		
+		if(Config.getBoolean(Config.TOOLBAR_SHOW_TASK_MGR_BUTTON_KEY, true))
+		{
+			Button taskMgr = new Button(context);
+			taskMgr.setBackgroundResource(R.drawable.task_mgr_toolbar_button);
+			taskMgr.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					if(workspace.isTaskMgrOpened())
+						workspace.closeTaskMgr(null);
+					else
+						workspace.openTaskMgr();
+				}
+	        });
+
+			toolbarButtons.add(taskMgr);
+		}
+		
 		showButtons();
 		
 		trayIcon = new ImageView(context);

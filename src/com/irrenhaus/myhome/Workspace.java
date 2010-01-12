@@ -22,7 +22,6 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
 import android.widget.Scroller;
 import android.widget.Toast;
 import android.widget.AdapterView.OnItemClickListener;
@@ -51,6 +50,7 @@ public class Workspace extends ViewGroup
 
 	private PlacesView				placesView;
 	private AppsView				appsView;
+	private TaskManager				taskManager;
 	
 	private DesktopSwitcher			desktopSwitcher = null;
 	private boolean 				desktopSwitcherOpened = false;
@@ -69,7 +69,7 @@ public class Workspace extends ViewGroup
 		super(context, set);
 	}
 	
-	public void setHome(myHome home, PlacesView placesView, AppsView appsView)
+	public void setHome(myHome home, PlacesView placesView, AppsView appsView, TaskManager mgr)
 	{
 		this.home = home;
 		
@@ -108,13 +108,15 @@ public class Workspace extends ViewGroup
 
         this.placesView = placesView;
         this.appsView = appsView;
+        this.taskManager = mgr;
 
         placesView.init(home.getScreen(), this);
         appsView.init(home.getScreen(), this);
         
         placesView.close();
         appsView.close();
-		
+		taskManager.close();
+        
 		desktopSwitcher = new DesktopSwitcher(home);
 		
 		gestureView = new GestureView(home);
@@ -259,6 +261,8 @@ public class Workspace extends ViewGroup
 			closeDesktopSwitcher(null);
 		if(gestureViewOpened)
 			closeGestureView(null);
+		if(taskManager.isOpened())
+			closeTaskMgr(null);
 	}
 
 	public void closeAllOpenWithoutFolder()
@@ -271,6 +275,8 @@ public class Workspace extends ViewGroup
 			closeDesktopSwitcher(null);
 		if(gestureViewOpened)
 			closeGestureView(null);
+		if(taskManager.isOpened())
+			closeTaskMgr(null);
 	}
 	
 	public void closeAllOpenFor(Runnable run)
@@ -297,6 +303,12 @@ public class Workspace extends ViewGroup
 		if(gestureViewOpened)
 		{
 			closeGestureView(run);
+			ran = true;
+		}
+		
+		if(taskManager.isOpened())
+		{
+			closeTaskMgr(run);
 			ran = true;
 		}
 		
@@ -398,14 +410,35 @@ public class Workspace extends ViewGroup
 		});
     	appsView.animateClose();
     }
+	
+	public void closeTaskMgr(final Runnable run)
+    {
+    	taskManager.setDoOnAnimationEnd(new Runnable() {
+			public void run() {
+				if(run != null)
+					run.run();
+			}
+		});
+    	taskManager.animateClose();
+    }
 
 	public void openAppsView() {
 		closeAllOpenWithoutFolder();
 		appsView.animateOpen();
 	}
 
+	public void openTaskMgr() {
+		closeAllOpenWithoutFolder();
+		taskManager.init();
+		taskManager.animateOpen();
+	}
+
 	public boolean isAppsViewOpened() {
 		return appsView.isOpened();
+	}
+
+	public boolean isTaskMgrOpened() {
+		return taskManager.isOpened();
 	}
 
 	public boolean isDesktopSwitcherOpened() {
@@ -536,7 +569,7 @@ public class Workspace extends ViewGroup
 	
 	public boolean isAnythingOpen() {
 		return (appsView.isOpened() || openedFolder != null || placesView.isOpened() ||
-				isDesktopSwitcherOpened() || isGestureViewOpened());
+				isDesktopSwitcherOpened() || isGestureViewOpened() || taskManager.isOpened());
 	}
 
 	public void cancelAllLongPresses() {

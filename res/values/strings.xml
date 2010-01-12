@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="prefs_toolbar_show_task_mgr_button">Show TaskManager button</string>
     <string name="prefs_gesture_manage_list">Manage gestures:</string>
     <string name="prefs_gesture_min_score">Minimal score to recognize:</string>
     <string name="prefs_gestures">Gestures</string>
@@ -76,4 +77,6 @@
 <string name="intent_action_call">Call </string>
 <string name="intent_action_sendto">SMS to</string>
 <string name="folder_no_content">Sorry, no content here.</string>
+<string name="task_mgr_close_task_title">Kill Task</string>
+<string name="task_mgr_close_task_message">Do you really want to close the application?:</string>
 </resources>

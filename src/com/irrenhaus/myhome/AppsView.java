@@ -26,21 +26,6 @@ public class AppsView extends Slider {
         appsGrid.setOnItemLongClickListener(workspace);
 	}
 
-	@Override
-	public void onMeasure(int widthMeasureSpec, int heightMeasureSpec)
-	{
-		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		
-		int count = getChildCount();
-		
-		for(int i = 0; i < count; i++)
-		{
-			View v = getChildAt(i);
-			
-			v.measure(widthMeasureSpec, heightMeasureSpec);
-		}
-	}
-
 	public AppsGrid getAppsGrid() {
 		return appsGrid;
 	}

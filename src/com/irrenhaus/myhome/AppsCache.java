@@ -73,6 +73,16 @@ public class AppsCache implements Runnable {
 		return null;
 	}
 	
+	public ApplicationInfo searchByPackageName(String name)
+	{
+		for(int i = 0; i < getAppCount(); i++)
+		{
+			if(applicationInfos.get(i).packageName.equals(name))
+				return applicationInfos.get(i);
+		}
+		return null;
+	}
+	
 	public int getAppCount()
 	{
 		return applicationInfos.size();
@@ -142,6 +152,7 @@ public class AppsCache implements Runnable {
         for(int i = 0; i < apps.size(); i++)
         {
         	ResolveInfo resolve = apps.get(i);
+        	
         	ApplicationInfo info = new ApplicationInfo();
         	
         	info.name = ""+resolve.loadLabel(pkgMgr);
@@ -154,6 +165,8 @@ public class AppsCache implements Runnable {
         	info.intentUri = intent.toURI();
 
             info.icon = Utilities.createIconThumbnail(resolve.loadIcon(pkgMgr), context);
+            
+            info.packageName = resolve.activityInfo.packageName;
         	
         	applicationInfos.add(info);
         	
@@ -284,6 +297,7 @@ public class AppsCache implements Runnable {
 	public class ApplicationInfo
 	{
 		public String	name = null;
+		public String	packageName = null;
 		public Drawable icon = null;
 		public Intent	intent = null;
 		public String	intentUri = null;
