@@ -48,22 +48,18 @@ public class TaskAdapter extends BaseAdapter {
 		notifyDataSetChanged();
 	}
 
-	@Override
 	public int getCount() {
 		return runningApps.size();
 	}
 
-	@Override
 	public Object getItem(int position) {
 		return runningApps.get(position);
 	}
 
-	@Override
 	public long getItemId(int position) {
 		return 0;
 	}
 
-	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		ViewHolder holder;
 

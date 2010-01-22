@@ -47,7 +47,6 @@ public class TaskManager extends Slider
 		adapter.load();
 	}
 
-	@Override
 	public void onItemClick(final AdapterView<?> arg0, View arg1, int arg2, long arg3) {
 		final ApplicationInfo info = ((ViewHolder)arg1.getTag()).info;
 		

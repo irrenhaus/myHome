@@ -895,7 +895,8 @@ public class myHome extends Activity {
     @Override
     public void onRestoreInstanceState(Bundle state)
     {
-    	super.onRestoreInstanceState(state);
+    	//Workaround because of java.lang.ClassCastException: android.widget.ListView$SavedState
+    	//on orientation change. Do not call the super method.
     }
 
 	public void startWidgetConfigure(Intent intent) {
