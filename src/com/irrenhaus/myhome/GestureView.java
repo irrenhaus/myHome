@@ -297,7 +297,6 @@ public class GestureView extends LinearLayout
 		}
 	}
 
-	@Override
 	public void onGesturePerformed(GestureOverlayView overlay, Gesture gesture) {
 		float minScore = Config.getFloat(Config.GESTURE_MIN_SCORE_KEY);
 		

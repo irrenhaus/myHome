@@ -546,10 +546,8 @@ public class Workspace extends ViewGroup
 			getChildAt(i).cancelLongPress();
 	}
 
-	@Override
 	public void applicationLoaded(final ApplicationInfo info) {
 		home.runOnUiThread(new Runnable() {
-			@Override
 			public void run() {
 				AppsAdapter adapter = (AppsAdapter)appsView.getAppsGrid().getAdapter();
 				adapter.add(info);
@@ -769,7 +767,6 @@ public class Workspace extends ViewGroup
 					    			final Point size = new Point(params.cellHSpan, params.cellVSpan);
 					    			
 					    			WidgetCache.getInstance().widgetReady(widgetid, new WidgetReadyListener() {
-										@Override
 										synchronized public void ready(final int widgetid) {
 											home.runOnUiThread(new Runnable() {
 												public void run()
@@ -794,7 +791,6 @@ public class Workspace extends ViewGroup
     	t.start();
     }
 
-	@Override
 	public void loadingDone() {
 		((AppsAdapter)appsView.getAppsGrid().getAdapter()).reload();
 		((MyPlacesAdapter)placesView.getMyPlacesAdapter()).reload();

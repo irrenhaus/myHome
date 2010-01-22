@@ -79,22 +79,18 @@ public class MyPlacesAdapter extends BaseAdapter {
 		return null;
 	}
 	
-	@Override
 	public int getCount() {
 		return places.size();
 	}
 
-	@Override
 	public Object getItem(int position) {
 		return places.get(position);
 	}
 
-	@Override
 	public long getItemId(int position) {
 		return 0;
 	}
 
-	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		if(convertView == null || !(convertView instanceof ShortcutTextView))
 			convertView = new ShortcutTextView(context);

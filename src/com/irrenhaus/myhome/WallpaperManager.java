@@ -105,7 +105,6 @@ public class WallpaperManager implements Runnable {
 		}
 	}
 	
-	@Override
 	public synchronized void run()
 	{
 		Bitmap wallpaper = null;

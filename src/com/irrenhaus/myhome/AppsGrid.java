@@ -44,17 +44,14 @@ public class AppsGrid extends GridView implements DragSource {
     	}
     }
 
-	@Override
 	public void onDrag(View view, Object info) {
 		dragInProgress = true;
 	}
 
-	@Override
 	public void onDropped(View view, Object info) {
 		dragInProgress = false;
 	}
 
-	@Override
 	public void setDragController(DragController ctrl) {
 		dragCtrl = ctrl;
 	}

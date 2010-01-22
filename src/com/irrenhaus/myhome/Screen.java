@@ -244,7 +244,6 @@ public class Screen extends LinearLayout implements DragController {
     	return super.dispatchKeyEvent(event);
     }
 	
-	@Override
 	public void onDragMotionEvent(MotionEvent event)
 	{
 		onTouchEvent(event);
@@ -353,7 +352,6 @@ public class Screen extends LinearLayout implements DragController {
 		toolbarContainer.invalidate();
 	}
     
-    @Override
 	public void onDragBegin(DragSource src, View view, Object info) {
 		if(!(src instanceof MyPlacesGrid) && src instanceof AppsGrid)
 			workspace.closeAppsView(null);
@@ -388,7 +386,6 @@ public class Screen extends LinearLayout implements DragController {
 		view.setVisibility(GONE);
 	}
 
-	@Override
 	public void onDragEnd() {
 		dragInProgress = false;
 		

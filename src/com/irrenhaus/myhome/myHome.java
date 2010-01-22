@@ -440,7 +440,6 @@ public class myHome extends Activity {
 					else
 					{
 						WidgetCache.getInstance().widgetReady(widgetid, new WidgetReadyListener() {
-							@Override
 							public void ready(final int widgetid) {
 								runOnUiThread(new Runnable() {
 									synchronized public void run()
@@ -514,7 +513,6 @@ public class myHome extends Activity {
    		{
     		AppsCache.getInstance().createSelectShortcutDialog(
     				new AppsCache.SelectShortcutListener() {
-    					@Override
     					public void onSelected(Intent intent)
     					{
     						completeAddGestureAppShortcut(intent);

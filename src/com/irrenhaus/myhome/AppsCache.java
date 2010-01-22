@@ -120,7 +120,6 @@ public class AppsCache implements Runnable {
     	}
 	}
 	
-	@Override
 	public synchronized void run()
 	{
 		PackageManager pkgMgr = context.getPackageManager();

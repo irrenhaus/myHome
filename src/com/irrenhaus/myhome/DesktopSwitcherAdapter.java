@@ -32,22 +32,18 @@ public class DesktopSwitcherAdapter extends BaseAdapter {
 		desktops = new Vector<Bitmap>();
 	}
 	
-	@Override
 	public int getCount() {
 		return desktops.size();
 	}
 
-	@Override
 	public Object getItem(int arg0) {
 		return desktops.get(arg0);
 	}
 
-	@Override
 	public long getItemId(int arg0) {
 		return 0;
 	}
 
-	@Override
 	public View getView(final int pos, View convertView, ViewGroup parent) {
 		ImageButton btn = null;
 		

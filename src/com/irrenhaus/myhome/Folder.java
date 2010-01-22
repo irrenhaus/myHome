@@ -174,17 +174,14 @@ public class Folder extends LinearLayout implements DragSource {
 		return adapter;
 	}
 
-	@Override
 	public void onDrag(View view, Object info) {
 		close();
 	}
 
-	@Override
 	public void onDropped(View view, Object info) {
 		
 	}
 
-	@Override
 	public void setDragController(DragController ctrl) {
 		dragCtrl = ctrl;
 	}

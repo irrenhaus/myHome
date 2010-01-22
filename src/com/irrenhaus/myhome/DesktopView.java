@@ -276,7 +276,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		}
 	}
 
-	@Override
 	public void onDrop(DragSource src, View view, Object info) {
 		dropInProgress = false;
 		dropView.setDrawingCacheEnabled(false);
@@ -352,7 +351,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		return ret;
 	}
 
-	@Override
 	public void onIncomingDrag(View view, Object info) {
 		dropInProgress = true;
 		dropView = view;
@@ -366,12 +364,10 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		vacantCellsUpdated = false;
 	}
 
-	@Override
 	public void setDragController(DragController ctrl) {
 		dragCtrl = ctrl;
 	}
 	
-	@Override
 	public void setInitialDragPosition(Point position)
 	{
 		dragPosition.x = position.x;
@@ -381,7 +377,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		estDropPosition.y = position.y;
 	}
 
-	@Override
 	public void onDragMovement(View view, Object info, Point position) {
 		dragPosition.x = position.x;
 		dragPosition.y = position.y;
@@ -462,7 +457,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		return color-64;
 	}
 	
-	@Override
 	public void onDrag(View view, Object info) {
 		dragInProgress = true;
 
@@ -510,7 +504,6 @@ public class DesktopView extends CellLayout implements DragTarget, DragSource {
 		return dragCtrl;
 	}
 
-	@Override
 	public void onDropped(View view, Object info) {
 		dragInProgress = false;
 	}

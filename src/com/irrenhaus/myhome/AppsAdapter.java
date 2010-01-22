@@ -56,22 +56,18 @@ public class AppsAdapter extends BaseAdapter {
 		apps.add(info);
 	}
 	
-	@Override
 	public int getCount() {
 		return apps.size();
 	}
 
-	@Override
 	public Object getItem(int position) {
 		return apps.get(position);
 	}
 
-	@Override
 	public long getItemId(int position) {
 		return 0;
 	}
 
-	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		if(convertView == null || !(convertView instanceof ShortcutTextView))
 			convertView = new ShortcutTextView(context);

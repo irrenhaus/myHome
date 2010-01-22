@@ -20,7 +20,6 @@ public class FolderAppsFilter implements AppsFilter {
 		homeDb = new MyHomeDB(context);
 	}
 
-	@Override
 	public boolean filterApplicationInfo(ApplicationInfo info) {
 		for(int i = 0; i < containingIntents.length; i++)
 		{
@@ -39,11 +38,9 @@ public class FolderAppsFilter implements AppsFilter {
 		return folderTitle;
 	}
 
-	@Override
 	public void done() {
 	}
 
-	@Override
 	public void init() {
 		db = homeDb.getReadableDatabase();
 		
