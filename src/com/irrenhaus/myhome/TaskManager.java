@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -60,6 +61,7 @@ public class TaskManager extends Slider
 				ActivityManager mgr = (ActivityManager) context
 										.getSystemService(Context.ACTIVITY_SERVICE);
 				mgr.restartPackage(info.packageName);
+				Log.d("myHome", "RestartPackage: "+info.packageName);
 				((TaskAdapter)arg0.getAdapter()).load();
 				dialog.cancel();
 			}

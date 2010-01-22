@@ -6,13 +6,12 @@ import java.util.Vector;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.LinearLayout.LayoutParams;
 
 import com.irrenhaus.myhome.AppsCache.ApplicationInfo;
 
@@ -39,8 +38,8 @@ public class TaskAdapter extends BaseAdapter {
 		for (RunningAppProcessInfo process : processes) {
 			ApplicationInfo info = AppsCache.getInstance().searchByPackageName(
 					process.processName);
-
 			if (info != null) {
+				Log.d("myHome", "Got: "+info.name);
 				runningApps.add(info);
 			}
 		}
@@ -63,7 +62,7 @@ public class TaskAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		ViewHolder holder;
 
-		ApplicationInfo info;
+		ApplicationInfo info = runningApps.get(position);
 
 		if (convertView == null) {
 			convertView = inflater.inflate(android.R.layout.simple_list_item_1, null);
@@ -72,15 +71,13 @@ public class TaskAdapter extends BaseAdapter {
 			holder.text = (TextView) convertView.findViewById(android.R.id.text1);
 
 			convertView.setTag(holder);
-			
-			holder.info = info = runningApps.get(position);
 		} else {
 			holder = (ViewHolder) convertView.getTag();
-			info = holder.info;
 		}
 		
 		holder.text.setText(info.name);
 		holder.text.setCompoundDrawables(info.icon, null, null, null);
+		holder.info = info;
 
 		return convertView;
 	}
