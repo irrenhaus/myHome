@@ -36,6 +36,15 @@
 				android:layout_width="fill_parent" />
 
 		</com.irrenhaus.myhome.AppsView>
+
+		<com.irrenhaus.myhome.TaskManager
+			android:id="@+id/taskMgr" android:layout_height="fill_parent"
+			android:layout_width="fill_parent" android:handle="@+id/handle"
+			slider:content="@+id/content" slider:position="right"
+			android:background="@drawable/tray_bg">
+			<ListView android:id="@id/content" android:layout_height="fill_parent"
+				android:layout_width="fill_parent" />
+		</com.irrenhaus.myhome.TaskManager>
 	</FrameLayout>
 	<FrameLayout android:id="@+id/toolbarContainer"
 		android:layout_weight="0" android:layout_height="54dip"

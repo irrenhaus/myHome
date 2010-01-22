@@ -20,6 +20,7 @@ public class Config {
 	public static final String	TOOLBAR_SHOW_CONTACTS_BUTTON_KEY = "toolbar_show_contacts_button";
 	public static final String	TOOLBAR_SHOW_DESKTOP_SWITCHER_BUTTON_KEY = "toolbar_show_desktop_switcher_button";
 	public static final String	TOOLBAR_SHOW_GESTURE_BUTTON_KEY = "toolbar_show_gesture_button";
+	public static final String	TOOLBAR_SHOW_TASK_MGR_BUTTON_KEY = "toolbar_show_task_mgr_button";
 	
 	public static final String	WALLPAPER_CHANGER_ACTIVE_KEY = "wallpaper_changer_active";
 	public static final String	WALLPAPER_CHANGER_DURATION_KEY = "wallpaper_changer_duration";
@@ -57,6 +58,9 @@ public class Config {
 		
 		values.put(TOOLBAR_SHOW_GESTURE_BUTTON_KEY, true);
 		persist.put(TOOLBAR_SHOW_GESTURE_BUTTON_KEY, true);
+		
+		values.put(TOOLBAR_SHOW_TASK_MGR_BUTTON_KEY, true);
+		persist.put(TOOLBAR_SHOW_TASK_MGR_BUTTON_KEY, true);
 		
 		values.put(WALLPAPER_CHANGER_ACTIVE_KEY, false);
 		persist.put(WALLPAPER_CHANGER_ACTIVE_KEY, true);

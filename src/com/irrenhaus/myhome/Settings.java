@@ -43,6 +43,7 @@ public class Settings extends PreferenceActivity {
 		CheckBoxPreference contactsBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_CONTACTS_BUTTON_KEY);
 		CheckBoxPreference switcherBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_DESKTOP_SWITCHER_BUTTON_KEY);
 		CheckBoxPreference gestureBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_GESTURE_BUTTON_KEY);
+		CheckBoxPreference taskMgrBtn = (CheckBoxPreference)findPreference(Config.TOOLBAR_SHOW_TASK_MGR_BUTTON_KEY);
 
 		CheckBoxPreference changerActive = (CheckBoxPreference)findPreference(Config.WALLPAPER_CHANGER_ACTIVE_KEY);
 		CheckBoxPreference changerSetOnStart = (CheckBoxPreference)findPreference(Config.WALLPAPER_CHANGER_SET_ON_START_KEY);
@@ -136,6 +137,17 @@ public class Settings extends PreferenceActivity {
 			public boolean onPreferenceChange(Preference preference,
 					Object newValue) {
 				Config.putBoolean(Config.TOOLBAR_SHOW_GESTURE_BUTTON_KEY, (Boolean)newValue);
+				
+				reinitToolbar = true;
+				
+				return true;
+			}
+		});
+		
+		taskMgrBtn.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+			public boolean onPreferenceChange(Preference preference,
+					Object newValue) {
+				Config.putBoolean(Config.TOOLBAR_SHOW_TASK_MGR_BUTTON_KEY, (Boolean)newValue);
 				
 				reinitToolbar = true;
 				

@@ -98,9 +98,10 @@ public class myHome extends Activity {
 
         PlacesView placesView = (PlacesView)findViewById(R.id.placesView);
         AppsView appsView = (AppsView)findViewById(R.id.appsView);
+        TaskManager taskMgr = (TaskManager)findViewById(R.id.taskMgr);
         
         workspace = (Workspace)findViewById(R.id.workspace);
-        workspace.setHome(this, placesView, appsView);
+        workspace.setHome(this, placesView, appsView, taskMgr);
         
         screen = (Screen)findViewById(R.id.screen);
         

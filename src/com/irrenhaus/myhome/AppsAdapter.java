@@ -83,7 +83,6 @@ public class AppsAdapter extends BaseAdapter {
 		((ShortcutTextView)convertView).setGravity(Gravity.CENTER);
 		
 		convertView.setDrawingCacheEnabled(true);
-		convertView.buildDrawingCache();
 		
 		return convertView;
 	}
