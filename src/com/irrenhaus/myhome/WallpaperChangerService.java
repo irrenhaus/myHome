@@ -97,7 +97,6 @@ public class WallpaperChangerService extends Service {
 		Log.d("myHome", "WallpaperChangerService: Switching wallpaper to "+(which+1)+" out of "+wallpapers.length);
 		
 		mgr.selectWallpaperPath(wallpapers[which]);
-		mgr.set();
 		
 		lastWallpaper = which;
 	}

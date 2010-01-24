@@ -64,6 +64,8 @@ public class Screen extends LinearLayout implements DragController {
 	private WallpaperManager 	wallpaperMgr;
 	
 	private FrameLayout			toolbarContainer;
+
+	private long 				clickTime = 0;
 	
 	public Screen(Context context) {
 		super(context);
@@ -224,6 +226,8 @@ public class Screen extends LinearLayout implements DragController {
 		{
 			clickX = (int)event.getX();
 			clickY = (int)event.getY();
+			
+			clickTime = System.currentTimeMillis();
 
 			lastMovementEventX = clickX;
 			lastMovementEventY = clickY;
@@ -251,7 +255,7 @@ public class Screen extends LinearLayout implements DragController {
 			
 			if(desktopChangeInProgress)
 			{
-				performDesktopChange(clickX, clickY,
+				performDesktopChange(clickX, clickY, clickTime,
 									(int)event.getX(), (int)event.getY(),
 									startScrollX, startScrollY);
 				return true;
@@ -286,7 +290,8 @@ public class Screen extends LinearLayout implements DragController {
 		//Debug.stopMethodTracing();
 	}
 
-	private void performDesktopChange(int startX, int startY, int x, int y, int scrollX, int scrollY)
+	private void performDesktopChange(int startX, int startY, long startTime,
+									  int x, int y, int scrollX, int scrollY)
 	{
 		if(myHome.getInstance().isDiamondLayout())
 		{
@@ -298,7 +303,8 @@ public class Screen extends LinearLayout implements DragController {
 				
 			workspace.scrollTo(scrollX+difference, 0);
 			
-			if(Math.abs(difference) > getWidth()*0.6)
+			if(Math.abs(difference) > getWidth()*0.6 ||
+					((System.currentTimeMillis() - startTime) < 500 && Math.abs(difference) > 50) )
 			{
 				if(difference < 0)
 					desktopToSet = -1;

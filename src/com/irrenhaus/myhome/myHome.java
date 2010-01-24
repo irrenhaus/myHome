@@ -25,14 +25,14 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Environment;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
+import android.view.WindowManager;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -81,8 +81,13 @@ public class myHome extends Activity {
         
         instance = this;
         
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        
+        if(Build.VERSION.SDK_INT >= 5)
+        {
+			WindowManager.LayoutParams attrs = getWindow().getAttributes();
+			attrs.flags |= WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER;
+			getWindow().setAttributes(attrs);
+        }
+
         setContentView(R.layout.main);
         
         //Debug.startMethodTracing("myHome");
@@ -114,7 +119,6 @@ public class myHome extends Activity {
         
         if(mgr != null)
         	mgr.setActivity(this);
-		
 		AppWidgetManager.getInstance(myHome.this);
 		
 		wallpaperReceiver = new BroadcastReceiver() {

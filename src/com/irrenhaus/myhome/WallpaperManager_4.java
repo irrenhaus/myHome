@@ -61,26 +61,24 @@ public class WallpaperManager_4 extends WallpaperManager implements Runnable {
 	{
 		resource = true;
 		resourceId = res;
+		set();
 	}
 	
 	public void selectWallpaperDrawable(Drawable u)
 	{
 		resource = false;
 		drawable = u;
+		set();
 	}
 	
 	public void selectWallpaperPath(String path)
 	{
 		resource = false;
 		drawable = Drawable.createFromPath(path);
+		set();
 	}
 	
-	public synchronized boolean isDone()
-	{
-		return done;
-	}
-	
-	public Bitmap getWallpaper(int w, int h)
+	private Bitmap getWallpaper(int w, int h)
 	{
 		if(wallpaper == null || wallpaper.isRecycled())
 			wallpaper = Utilities.centerToFit(((BitmapDrawable)activity.getWallpaper()).getBitmap(),
@@ -89,9 +87,9 @@ public class WallpaperManager_4 extends WallpaperManager implements Runnable {
 		return wallpaper;
 	}
 	
-	public void set()
+	private void set()
 	{
-		if(myself != null && !isDone())
+		if(myself != null && !done)
 		{
 			myself.stop();
 		}
@@ -100,7 +98,7 @@ public class WallpaperManager_4 extends WallpaperManager implements Runnable {
 		myself.start();
 	}
 	
-	public void stop()
+	protected void stop()
 	{
 		if(myself != null && myself.isAlive() && !myself.isInterrupted())
 		{
@@ -153,10 +151,6 @@ public class WallpaperManager_4 extends WallpaperManager implements Runnable {
 		activity.sendBroadcast(new Intent(Intent.ACTION_WALLPAPER_CHANGED));
 		
 		done = true;
-	}
-
-	public boolean wallpaperChanged() {
-		return wallpaperChanged;
 	}
 
 	public void drawWallpaper(Canvas canvas) {

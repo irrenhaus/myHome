@@ -66,7 +66,6 @@ public class WallpaperChanger extends Activity {
 		buttonOk.setOnClickListener(new OnClickListener() {
 			public void onClick(View arg0) {
 				mgr.selectWallpaperPath(selectedUri);
-				mgr.set();
 				
 				finish();
 			}
