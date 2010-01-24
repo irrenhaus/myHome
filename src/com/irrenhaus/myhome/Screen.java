@@ -62,10 +62,6 @@ public class Screen extends LinearLayout implements DragController {
 	private Paint				blackPaint;
 
 	private WallpaperManager 	wallpaperMgr;
-
-	private Bitmap 				wallpaperBmp;
-	private Rect				wallpaperSrcRect;
-	private RectF				wallpaperDstRect;
 	
 	private FrameLayout			toolbarContainer;
 	
@@ -107,19 +103,14 @@ public class Screen extends LinearLayout implements DragController {
 		whitePaint.setARGB(192, 255, 255, 255);
 		whitePaint.setStyle(Style.FILL);
 		
-    	wallpaperMgr = WallpaperManager.getInstance();
+    	wallpaperMgr = (WallpaperManager)VersionAbstraction.getService(VersionAbstraction.WALLPAPER_MANAGER);
     	wallpaperChanged();
     	
     	toolbarContainer = (FrameLayout) findViewById(R.id.toolbarContainer);
-
-    	wallpaperDstRect = new RectF(0, 0, getWidth(), getHeight());
-    	wallpaperSrcRect = new Rect(0, 0, getWidth(), getHeight());
 	}
 	
 	public void wallpaperChanged()
 	{
-		wallpaperBmp = wallpaperMgr.getWallpaper(getWidth(), getHeight());
-		
 		invalidate();
 	}
 	
@@ -128,38 +119,7 @@ public class Screen extends LinearLayout implements DragController {
     {
 		boolean opened = workspace.isAnythingOpen();
 		
-		if(wallpaperMgr.wallpaperChanged() || wallpaperBmp == null || wallpaperBmp.isRecycled())
-		{
-			wallpaperBmp = wallpaperMgr.getWallpaper(getWidth(), getHeight());
-		}
-			
-    	if(wallpaperBmp != null && !wallpaperBmp.isRecycled())
-    	{
-    		int count = Config.getInt(Config.NUM_DESKTOPS_KEY) + 1;
-    		
-    		int width = getWidth();
-    		int wallpaperWidth = wallpaperBmp.getWidth();
-    		int scrollX = myHome.getInstance().getWorkspace().getScrollX();
-    		
-    		float offset = wallpaperWidth > width ? (count * width - wallpaperWidth) /
-    				(count * (float) width) : 1.0f;
-    		
-    		float x = scrollX * offset * -1;
-
-    		if (x + wallpaperWidth < getRight() - getLeft()) {
-    			x = getRight() - getLeft() - wallpaperWidth;
-    		}
-    		
-    		if(scrollX < 0)
-    			x = 0;
-
-    		wallpaperSrcRect.left = (int) (x * -1);
-    		wallpaperSrcRect.top = (getBottom() - getTop() - wallpaperBmp.getHeight()) / 2 * -1;
-    		wallpaperSrcRect.right = wallpaperSrcRect.left + getWidth();
-    		wallpaperSrcRect.bottom = wallpaperSrcRect.top + getHeight();
-    		
-    		canvas.drawBitmap(wallpaperBmp, wallpaperSrcRect, wallpaperDstRect, defaultPaint);
-    	}
+		wallpaperMgr.drawWallpaper(canvas);
     	
     	super.dispatchDraw(canvas);
     	

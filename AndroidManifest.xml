@@ -22,7 +22,7 @@
 <service android:label="@string/wallpaper_changer_service_label" android:name="WallpaperChangerService"></service>
 <activity android:name="GestureSettings" android:label="@string/prefs_gesture_settings"></activity>
 </application>
-    <uses-sdk android:minSdkVersion="4" />
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="7" android:maxSdkVersion="7"/>
 
 <uses-permission android:name="android.permission.SET_WALLPAPER"></uses-permission>
 <uses-permission android:name="android.permission.BIND_APPWIDGET"></uses-permission>
@@ -31,4 +31,5 @@
 <uses-permission android:name="android.permission.CALL_PHONE"></uses-permission>
 <uses-permission android:name="android.permission.READ_CONTACTS"></uses-permission>
 <uses-permission android:name="android.permission.RESTART_PACKAGES"></uses-permission>
+
 </manifest> 

@@ -84,6 +84,8 @@ public class WallpaperChangerService extends Service {
 	
 	public void changeWallpaper()
 	{
+		WallpaperManager mgr = (WallpaperManager)VersionAbstraction.getService(VersionAbstraction.WALLPAPER_MANAGER);
+		
 		int which = lastWallpaper + 1;
 		
 		if(lastWallpaper == -1)
@@ -94,8 +96,8 @@ public class WallpaperChangerService extends Service {
 		
 		Log.d("myHome", "WallpaperChangerService: Switching wallpaper to "+(which+1)+" out of "+wallpapers.length);
 		
-		WallpaperManager.getInstance().selectWallpaperPath(wallpapers[which]);
-		WallpaperManager.getInstance().set();
+		mgr.selectWallpaperPath(wallpapers[which]);
+		mgr.set();
 		
 		lastWallpaper = which;
 	}

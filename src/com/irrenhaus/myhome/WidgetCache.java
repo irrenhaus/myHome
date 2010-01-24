@@ -6,7 +6,6 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import com.irrenhaus.myhome.CellLayout.LayoutParams;
 

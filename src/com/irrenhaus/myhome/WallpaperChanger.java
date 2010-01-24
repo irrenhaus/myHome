@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -25,6 +24,8 @@ public class WallpaperChanger extends Activity {
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+		
+		final WallpaperManager mgr = (WallpaperManager)VersionAbstraction.getService(VersionAbstraction.WALLPAPER_MANAGER);
 		
 		setContentView(R.layout.wallpaper_chooser_layout);
 		
@@ -64,8 +65,8 @@ public class WallpaperChanger extends Activity {
 
 		buttonOk.setOnClickListener(new OnClickListener() {
 			public void onClick(View arg0) {
-				WallpaperManager.getInstance().selectWallpaperPath(selectedUri);
-				WallpaperManager.getInstance().set();
+				mgr.selectWallpaperPath(selectedUri);
+				mgr.set();
 				
 				finish();
 			}

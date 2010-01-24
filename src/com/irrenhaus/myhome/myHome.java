@@ -93,6 +93,8 @@ public class myHome extends Activity {
         
         CrashHandler.getInstance().CheckErrorAndSendMail(this);
         
+        VersionAbstraction.init();
+        
         AppsCache.getInstance().setContext(getApplicationContext());
         WidgetCache.getInstance().init(getApplicationContext());
 
@@ -108,9 +110,10 @@ public class myHome extends Activity {
         toolbar = (Toolbar)findViewById(R.id.toolbar);
         toolbar.initToolbar();
         
-        WallpaperManager mgr = WallpaperManager.getInstance();
+        WallpaperManager mgr = (WallpaperManager)VersionAbstraction.getService(VersionAbstraction.WALLPAPER_MANAGER);
         
-        mgr.setActivity(this);
+        if(mgr != null)
+        	mgr.setActivity(this);
 		
 		AppWidgetManager.getInstance(myHome.this);
 		
